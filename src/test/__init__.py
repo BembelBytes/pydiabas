@@ -28,4 +28,4 @@ To run a specific test for an ECU (in this case the MSD80) use:
 
 class PythonVersionTest(unittest.TestCase):
     def test_python_version(self):
-        self.assertEqual(len(hex(id(None))), 9, f"\n    Please use a 32bit python version\n    Used python version: {sys.version}\n    Used python executable: {sys.executable}")
+        self.assertEqual(len(hex(id(None))), 10, f"\n    Please use a 32bit python version\n    Used python version: {sys.version}\n    Used python executable: {sys.executable}")
