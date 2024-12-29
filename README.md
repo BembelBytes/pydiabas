@@ -60,7 +60,7 @@ I'm using the [MaxDia Diag 2+](https://www.obdexpert.de/shopware/diagnose-artike
 > I don't get payed by obdexpert.de, its just as personal recommendation based on my experience. There may be lots of other cables out there which will be as good or even better as my suggestion, but I've never used them.
 
 ### Python Version and dependencies
-This module has been developed using [python 3.12.7 32bit](https://www.python.org/downloads/release/python-3127/).
+This module has been developed using [python 3.12.7 32bit](https://www.python.org/downloads/release/python-3127/) and tested on [python 3.13.1 32bit](https://www.python.org/downloads/release/python-3131/).
 As **EDIABAS** uses 32bits memory addresses, a 32bit python version is necessary to load the **EDIABAS** dynamic library ("api32.dll").
 
 
