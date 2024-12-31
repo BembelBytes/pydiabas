@@ -19,10 +19,10 @@ Make sure to use a 32bit python version when running these test!
 
 COMMANDS
 To run all the test which do NOT need a connection to a car please use:
-    > python -m unittest test
+    > python -W always -m unittest test
 
 To run a specific test for an ECU (in this case the MSD80) use:
-    > python -m unittest test.test_ecu.test_msd80
+    > python -W always -m unittest test.test_ecu.test_msd80
 """
 
 
