@@ -30,8 +30,22 @@ class TestECU():
         assert isinstance(jobs[list(jobs.keys())[0]], dict)
         assert len(jobs[list(jobs.keys())[0]]) == 0
 
-    def get_jobs_with_details(self, pydiabas, tmode):
+    def test_get_jobs_with_details(self, pydiabas, tmode):
         jobs = tmode.get_jobs(pydiabas=pydiabas, details=True)
+        assert isinstance(jobs, dict)
+        assert len(jobs) >= 1
+        assert isinstance(jobs[list(jobs.keys())[0]], dict)
+        assert len(jobs[list(jobs.keys())[0]]) >= 1
+
+    def test_get_jobs_verbose(self, pydiabas, tmode):
+        jobs = tmode.get_jobs(pydiabas=pydiabas, details=False, verbose=True)
+        assert isinstance(jobs, dict)
+        assert len(jobs) >= 1
+        assert isinstance(jobs[list(jobs.keys())[0]], dict)
+        assert len(jobs[list(jobs.keys())[0]]) == 0
+
+    def test_get_jobs_with_details_verbose(self, pydiabas, tmode):
+        jobs = tmode.get_jobs(pydiabas=pydiabas, details=True, verbose=True)
         assert isinstance(jobs, dict)
         assert len(jobs) >= 1
         assert isinstance(jobs[list(jobs.keys())[0]], dict)
@@ -79,6 +93,18 @@ class TestECU():
         tables = tmode.get_tables(pydiabas=pydiabas, details=False)
         assert isinstance(tables, dict)
     
+    def test_get_tables_verbose(self, pydiabas, tmode):
+        tables = tmode.get_tables(pydiabas=pydiabas, details=False, verbose=True)
+        assert isinstance(tables, dict)
+    
+    def test_get_tables_with_details(self, pydiabas, tmode):
+        tables = tmode.get_tables(pydiabas=pydiabas, details=True)
+        assert isinstance(tables, dict)
+    
+    def test_get_tables_with_details_verbose(self, pydiabas, tmode):
+        tables = tmode.get_tables(pydiabas=pydiabas, details=True, verbose=True)
+        assert isinstance(tables, dict)
+    
     def test_get_tables_wrong_ecu_name(self, pydiabas, ecu):
         with pytest.raises(StateError):
             ecu.get_tables(pydiabas=pydiabas, details=False)
@@ -90,5 +116,7 @@ class TestECU():
         )
     
     def test_get_table_details_wrong_ecu_and_table_name(self, pydiabas, ecu):
-        with pytest.raises(StateError):
+        assert (
             ecu.get_table_details(pydiabas=pydiabas, table="INFO")
+            == {'body': [], 'header': []}
+        )

@@ -7,10 +7,8 @@ from pydiabas.ediabas import EDIABAS
 # of the class
 @pytest.fixture(scope="session")
 def pydiabas():
-    pydiabas = PyDIABAS()
-    pydiabas.start()
-    yield pydiabas
-    pydiabas.end()
+    with PyDIABAS() as pydiabas:
+        yield pydiabas
 
 
 # Reset PyDIABAS before each test function automatically

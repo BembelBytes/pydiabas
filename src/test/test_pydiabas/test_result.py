@@ -17,29 +17,29 @@ class TestRow():
 
 @pytest.mark.offline
 class TestSet():
-    def test_init(self):
+    def test___init__(self):
         s = Set()
         assert isinstance(s, Set)
         assert s._rows == []
 
-    def test_init_empty_list(self):
+    def test___init___empty_list(self):
         Set(rows=[])
 
-    def test_init_rows(self):
+    def test___init___rows(self):
         r = Row(name="name", value="value")
         s = Set(rows=[r])
         assert s._rows == [r]
 
-    def test_init_rows_no_list(self):
+    def test___init___rows_no_list(self):
         r = Row(name="name", value="value")
         with pytest.raises(TypeError):
             Set(rows=r)
 
-    def test_init_rows_no_row_in_list(self):
+    def test___init___rows_no_row_in_list(self):
         with pytest.raises(TypeError):
             Set(rows=[2])
 
-    def test_init_rows_not_only_rows_in_list(self):
+    def test___init___rows_not_only_rows_in_list(self):
         r = Row(name="name", value="value")
         with pytest.raises(TypeError):
             Set(rows=[r, 2])
@@ -154,6 +154,13 @@ class TestSet():
         assert s.get("four") == None
         assert s.get("four", default=4) == 4
     
+    def test_get_wrong_type(self):
+        r1 = Row(name="one", value="1")
+        r2 = Row(name="one", value=1)
+        s = Set(rows=[r1, r2])
+        with pytest.raises(TypeError):
+            s.get(1)
+    
     def test___len__(self):
         r1 = Row(name="one", value="1")
         r2 = Row(name="one", value=1)
@@ -174,9 +181,6 @@ class TestSet():
         r1 = Row(name="one", value="1")
         r2 = Row(name="one", value=1)
         s = Set(rows=[r1, r2])
-        for i, r in enumerate(s):
-            assert r == s[i]
-        s._rows = []
         for i, r in enumerate(s):
             assert r == s[i]
 
@@ -238,13 +242,17 @@ class TestResult():
         return r_empty
 
 
-    def test_init(self, pydiabas, r_empty):
+    def test___init__(self, pydiabas, r_empty):
         assert isinstance(r_empty, Result)
         assert isinstance(r_empty._systemSet, Set)
         assert r_empty._jobSets == []
         assert r_empty._systemSet.all == []
         assert isinstance(r_empty._ediabas, EDIABAS)
         assert r_empty._ediabas == pydiabas._ediabas
+
+    def test___init___wrong_type(self):
+        with pytest.raises(TypeError):
+            Result("")
 
     def test_clear(self, r_simulation):
         r_simulation.clear()
@@ -483,6 +491,10 @@ class TestResult():
         assert r_empty.count("SYS") == 0
         assert r_empty.count("R1") == 0
         assert r_empty.count("R2") == 0
+    
+    def test_count_wring_type(self, r_empty):
+        with pytest.raises(TypeError):
+            r_empty.count(1)
 
     def test_index(self, r_simulation):
         assert r_simulation.index(name="R1", start=0, end=100) == 0
@@ -567,9 +579,9 @@ class TestResult():
         assert len(r_simulation) == 3
         assert len(r_empty) == 0
         
-    def test___bool__(self, r_simulation, r_empty):
+    def test___bool__(self, r_simulation, r_tmode__jobs, r_empty):
         assert r_simulation
-        assert self.r_tmode__jobs
+        assert r_tmode__jobs
         assert not r_empty
     
     def test___iter__(self, r_simulation):

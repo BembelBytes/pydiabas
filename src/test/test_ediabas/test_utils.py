@@ -6,6 +6,15 @@ from pydiabas.ediabas import utils
 @pytest.mark.offline
 class TestUtils():
 
+    """Coverage note
+    
+    As there are only the following types available in TMODE ECU:
+        BINARY, TEXT, WORD, INTEGER
+    
+    Only these values can be tested reliable in an offline state.
+    The structure of the getResult function will be tested far enough
+    """
+
     # Execute job to have the result available for each test
     @pytest.fixture(scope="function", autouse=True)
     def add_job_tmode_lese_interface_type(self, ediabas):

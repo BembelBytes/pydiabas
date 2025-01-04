@@ -145,6 +145,10 @@ class TestPyDIABAS():
     def test_job_parameters_list_of_mixed_end(self, pydiabas):
         with pytest.raises(TypeError):
             pydiabas.job(b"TMODE", b"LESE_INTERFACE_TYP", parameters=["TEST", "TEST2", b"TEST3"])
+    
+    def test_job_parameters_invalid(self, pydiabas):
+        with pytest.raises(TypeError):
+            pydiabas.job(b"TMODE", b"LESE_INTERFACE_TYP", parameters=3.2)
 
     def test_job_results_str(self, pydiabas):
         r = pydiabas.job(b"TMODE", b"LESE_INTERFACE_TYP", result_filter="TEST")
