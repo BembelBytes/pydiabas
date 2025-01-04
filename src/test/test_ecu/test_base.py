@@ -1,93 +1,94 @@
-import unittest
-from pydiabas import PyDIABAS, StateError
-from pydiabas.ediabas import EDIABAS
+import pytest
+
+from pydiabas import StateError
 from pydiabas.ecu import ECU
 
-__all__ = [
-    "ECUTest"
-]
 
 
-class ECUTest(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        cls.pydiabas = PyDIABAS()
-        cls.pydiabas.start()
+@pytest.mark.offline
+class TestECU():
+
+    # Provide a fresh ecu for each test function
+    @pytest.fixture(scope="function")
+    def ecu(self):
+        return ECU()
+
+    # Provide a fresh tmode for each test function
+    @pytest.fixture(scope="function")
+    def tmode(self):
+        return ECU(name="TMODE")
+
+
+    def test_init(self, ecu, tmode):
+        assert ecu.name == ""
+        assert tmode.name == "TMODE"
+
+    def test_get_jobs(self, pydiabas, tmode):
+        jobs = tmode.get_jobs(pydiabas=pydiabas, details=False)
+        assert isinstance(jobs, dict)
+        assert len(jobs) >= 1
+        assert isinstance(jobs[list(jobs.keys())[0]], dict)
+        assert len(jobs[list(jobs.keys())[0]]) == 0
+
+    def get_jobs_with_details(self, pydiabas, tmode):
+        jobs = tmode.get_jobs(pydiabas=pydiabas, details=True)
+        assert isinstance(jobs, dict)
+        assert len(jobs) >= 1
+        assert isinstance(jobs[list(jobs.keys())[0]], dict)
+        assert len(jobs[list(jobs.keys())[0]]) >= 1
+    
+    def test_get_jobs_wrong_ecu_name(self, pydiabas, ecu):
+        with pytest.raises(StateError):
+            ecu.get_jobs(pydiabas=pydiabas, details=False)
+     
+    def test_get_job_details(self, pydiabas, tmode):
+        details = tmode.get_job_details(pydiabas=pydiabas, job="SENDE_TELEGRAMM")
+        assert len(details) == 3
+        assert "comments" in details
+        assert "arguments" in details
+        assert "results" in details
+
+        assert isinstance(details["comments"], list)
+        assert len(details["comments"]) >= 1
+        assert isinstance(details["arguments"], list)
+        assert len(details["arguments"]) >= 1
+        assert isinstance(details["results"], list)
+        assert len(details["results"]) >= 1
+
+        assert "name" in details["arguments"][0]
+        assert "type" in details["arguments"][0]
+        assert "comments" in details["arguments"][0]
+        assert "name" in details["results"][0]
+        assert "type" in details["results"][0]
+        assert "comments" in details["results"][0]
+    
+    def test_get_job_details_wrong_ecu_name(self, pydiabas, ecu):
+        assert (
+            ecu.get_job_details(pydiabas=pydiabas, job="INFO")
+            == {'comments': [], 'arguments': [], 'results': []}
+        )
         
-    @classmethod
-    def tearDownClass(cls):
-        cls.pydiabas.end()
-
-    def setUp(self):
-        self.pydiabas.reset()
-        self.ecu = ECU()
-        self.tmode = ECU(name="TMODE")
-
-    def test_init(self):
-        self.assertEqual(self.ecu.name, "")
-        self.assertEqual(self.tmode.name, "TMODE")
-
-    def test_get_jobs(self):
-        jobs = self.tmode.get_jobs(pydiabas=self.pydiabas, details=False)
-        self.assertIsInstance(jobs, dict)
-        self.assertGreaterEqual(len(jobs), 1)
-        self.assertIsInstance(jobs[list(jobs.keys())[0]], dict)
-        self.assertEqual(len(jobs[list(jobs.keys())[0]]), 0)
-
-    def get_jobs_with_details(self):
-        jobs = self.tmode.get_jobs(pydiabas=self.pydiabas, details=True)
-        self.assertIsInstance(jobs, dict)
-        self.assertGreaterEqual(len(jobs), 1)
-        self.assertIsInstance(jobs[list(jobs.keys())[0]], dict)
-        self.assertGreaterEqual(len(jobs[list(jobs.keys())[0]]), 1)
     
-    def test_get_jobs_wrong_ecu_name(self):
-        with self.assertRaises(StateError):
-            self.ecu.get_jobs(pydiabas=self.pydiabas, details=False)
-        
-    def test_get_job_details(self):
-        details = self.tmode.get_job_details(pydiabas=self.pydiabas, job="SENDE_TELEGRAMM")
-        self.assertEqual(len(details), 3)
-        self.assertTrue("comments" in details)
-        self.assertTrue("arguments" in details)
-        self.assertTrue("results" in details)
-
-        self.assertIsInstance(details["comments"], list)
-        self.assertGreaterEqual(len(details["comments"]), 1)
-        self.assertIsInstance(details["arguments"], list)
-        self.assertGreaterEqual(len(details["arguments"]), 1)
-        self.assertIsInstance(details["results"], list)
-        self.assertGreaterEqual(len(details["results"]), 1)
-
-        self.assertTrue("name" in details["arguments"][0])
-        self.assertTrue("type" in details["arguments"][0])
-        self.assertTrue("comments" in details["arguments"][0])
-        self.assertTrue("name" in details["results"][0])
-        self.assertTrue("type" in details["results"][0])
-        self.assertTrue("comments" in details["results"][0])
-    
-    def test_get_job_details_wrong_ecu_name(self):
-        self.assertEqual(
-            self.ecu.get_job_details(pydiabas=self.pydiabas, job="INFO"),
-            {'comments': [], 'arguments': [], 'results': []}
+    def test_get_job_details_wrong_job_name(self, pydiabas, tmode):
+        assert (
+            tmode.get_job_details(pydiabas=pydiabas, job="XX")
+            == {'comments': [], 'arguments': [], 'results': []}
         )
     
-    def test_get_job_details_wrong_job_name(self):
-        self.assertEqual(
-            self.tmode.get_job_details(pydiabas=self.pydiabas, job="XX"),
-            {'comments': [], 'arguments': [], 'results': []}
+    def test_get_tables(self, pydiabas, tmode):
+        tables = tmode.get_tables(pydiabas=pydiabas, details=False)
+        assert isinstance(tables, dict)
+    
+    def test_get_tables_wrong_ecu_name(self, pydiabas, ecu):
+        with pytest.raises(StateError):
+            ecu.get_tables(pydiabas=pydiabas, details=False)
+    
+    def test_get_table_details_wrong_table_name(self, pydiabas, tmode):
+        assert (
+            tmode.get_table_details(pydiabas=pydiabas, table="INFO")
+            == {'body': [], 'header': []}
         )
     
-    def test_get_tables(self):
-        tables = self.tmode.get_tables(pydiabas=self.pydiabas, details=False)
-        self.assertIsInstance(tables, dict)
-    
-    def test_get_tables_wrong_ecu_name(self):
-        with self.assertRaises(StateError):
-            self.ecu.get_tables(pydiabas=self.pydiabas, details=False)
-    
-    def test_get_table_details_wrong_ecu_and_table_name(self):
-        self.assertEqual(
-            self.ecu.get_table_details(pydiabas=self.pydiabas, table="INFO"),
-            {'body': [], 'header': []}
-        )
+    def test_get_table_details_wrong_ecu_and_table_name(self, pydiabas, ecu):
+        with pytest.raises(StateError):
+            ecu.get_table_details(pydiabas=pydiabas, table="INFO")

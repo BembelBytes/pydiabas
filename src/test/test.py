@@ -1,9 +1,4 @@
-import sys
-import unittest
-
-from .test_pydiabas import *
-from .test_ediabas import *
-from .test_ecu import *
+import pytest
 
 
 """Using these tests:
@@ -19,13 +14,13 @@ Make sure to use a 32bit python version when running these test!
 
 COMMANDS
 To run all the test which do NOT need a connection to a car please use:
-    > python -W always -m unittest test
-
-To run a specific test for an ECU (in this case the MSD80) use:
-    > python -W always -m unittest test.test_ecu.test_msd80
+    > python -W always -m pytest test                   => All tests
+    > python -W always -m pytest test -m offline        => Only test that need no car connected
+    > python -W always -m pytest test -m msd80          => Only MSD80 tests
 """
 
 
-class PythonVersionTest(unittest.TestCase):
+@pytest.mark.offline
+class TestPythonVersion():
     def test_python_version(self):
-        self.assertEqual(len(hex(id(None))), 10, f"\n    Please use a 32bit python version\n    Used python version: {sys.version}\n    Used python executable: {sys.executable}")
+        assert len(hex(id(None))) == 10
