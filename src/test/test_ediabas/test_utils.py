@@ -4,13 +4,12 @@ from pydiabas.ediabas import utils
 
 
 @pytest.mark.offline
-class TestUtils():
-
+class TestUtils:
     """Coverage note
-    
+
     As there are only the following types available in TMODE ECU:
         BINARY, TEXT, WORD, INTEGER
-    
+
     Only these values can be tested reliable in an offline state.
     The structure of the getResult function will be tested far enough
     """
@@ -20,10 +19,9 @@ class TestUtils():
     def add_job_tmode_lese_interface_type(self, ediabas):
         ediabas.job("TMODE", "LESE_INTERFACE_TYP")
 
-
     def test_getResult_Binary(self, ediabas):
         assert utils.getResult(ediabas, "TYP") == b"OBD"
-    
+
     def test_getResult_Text(self, ediabas):
         assert utils.getResult(ediabas, "OBJECT", set=0) == "tmode"
         assert utils.getResult(ediabas, "JOBNAME", set=0) == "LESE_INTERFACE_TYP"
@@ -38,3 +36,6 @@ class TestUtils():
         assert utils.getResult(ediabas, "UBATTHISTORY", set=0) == -1
         assert utils.getResult(ediabas, "IGNITIONCURRENT", set=0) == -1
         assert utils.getResult(ediabas, "IGNITIONHISTORY", set=0) == -1
+
+    def test_job_failed(self, ediabas):
+        assert utils.getResult(ediabas, "TEST") is None

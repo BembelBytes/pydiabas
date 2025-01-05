@@ -3,6 +3,7 @@ import pytest
 from pydiabas import PyDIABAS
 from pydiabas.ediabas import EDIABAS
 
+
 # Yield a running PyDIABAS instance scoped to the module to start it before the first and stop it after the last test
 # of the class
 @pytest.fixture(scope="session")
@@ -14,7 +15,7 @@ def pydiabas():
 # Reset PyDIABAS before each test function automatically
 @pytest.fixture(scope="function", autouse=True)
 def reset_pydiabas(pydiabas):
-        pydiabas.reset()
+    pydiabas.reset()
 
 
 # Yield a running EDIABAS instance scoped to the module to start it before the first and stop it after the last test
@@ -30,5 +31,5 @@ def ediabas():
 # Reset EDIABAS before each test function automatically
 @pytest.fixture(scope="function", autouse=True)
 def reset_ediabas(ediabas):
-        ediabas.end()
-        ediabas.init()
+    ediabas.end()
+    ediabas.init()

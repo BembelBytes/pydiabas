@@ -1,12 +1,12 @@
 import pytest
 
-from pydiabas import Result
+from pydiabas import Result, StateError
 from pydiabas.ecu import MSD80
 from pydiabas.ecu.msd80 import BlockCreateError, BlockReadError, ValueReadError
 
 
 @pytest.mark.msd80
-class TestMSD80():
+class TestMSD80:
     READINGS_NO_LOOKUP_A = ["0x5A30", "0x5A31", "0x5A32", "0x5A33", "0x5A34", "0x5A35"]
     READINGS_NO_LOOKUP_B = ["0x5B00", "0x5B01", "0x5B02", "0x5B03", "0x5B04", "0x5B05"]
     READINGS_SINGLE_LOOKUP_A = ["0x5AB1", "0x58E4"]
@@ -19,6 +19,15 @@ class TestMSD80():
     @pytest.fixture(scope="function")
     def msd80(self):
         return MSD80()
+
+    # If the MSD80 ECU is sleeping, the first job call may return an IFH-0018: INITIALIZATION ERROR
+    # Calling a simple job before running the tests will avoid the first test to fail due to a sleeping ECU
+    @pytest.fixture(scope="class", autouse=True)
+    def avoid_initialization_error(self, pydiabas):
+        try:
+            pydiabas.job("MSD80", "INFO")
+        except StateError:
+            pass
 
     def test_init(self, msd80):
         assert msd80.name == "MSD80"
@@ -48,11 +57,11 @@ class TestMSD80():
         assert msd80._block == TestMSD80.READINGS_SINGLE_LOOKUP_B
         assert callable(msd80._last_read_function)
         assert msd80._last_read_function is not last_read_function_1
-    
+
     def test_set_block_multiple_lookups_raises_exception(self, pydiabas, msd80):
         with pytest.raises(BlockCreateError):
             msd80.set_block(pydiabas, TestMSD80.READINGS_MULTIPLE_LOOKUPS_A)
-    
+
     def test_set_block_multiple_lookups_clears_block(self, pydiabas, msd80):
         msd80.set_block(pydiabas, TestMSD80.READINGS_NO_LOOKUP_A)
         assert msd80._block == TestMSD80.READINGS_NO_LOOKUP_A
@@ -62,14 +71,14 @@ class TestMSD80():
             msd80.set_block(pydiabas, TestMSD80.READINGS_MULTIPLE_LOOKUPS_A)
         except BlockCreateError:
             pass
-        
+
         assert msd80._block == []
         assert callable(msd80._last_read_function)
-    
+
     def test_set_block_invalid_value_raises_exception(self, pydiabas, msd80):
         with pytest.raises(BlockCreateError):
             msd80.set_block(pydiabas, TestMSD80.READINGS_PARTLY_INVALID)
-    
+
     def test_set_block_invalid_value_clears_block(self, pydiabas, msd80):
         msd80.set_block(pydiabas, TestMSD80.READINGS_NO_LOOKUP_A)
         assert msd80._block == TestMSD80.READINGS_NO_LOOKUP_A
@@ -79,10 +88,10 @@ class TestMSD80():
             msd80.set_block(pydiabas, TestMSD80.READINGS_PARTLY_INVALID)
         except BlockCreateError:
             pass
-        
+
         assert msd80._block == []
         assert callable(msd80._last_read_function)
-    
+
     def test_read_block(self, pydiabas, msd80):
         msd80.set_block(pydiabas, TestMSD80.READINGS_NO_LOOKUP_A)
         last_read_function_1 = msd80._last_read_function
@@ -90,10 +99,26 @@ class TestMSD80():
         assert isinstance(result, Result)
         assert msd80._last_read_function is not last_read_function_1
 
-    def test_read_block_fails(self, pydiabas, msd80):
+    def test_read_block_fails_no_block_set(self, pydiabas, msd80):
         with pytest.raises(BlockReadError):
             msd80.read_block(pydiabas)
-    
+
+    def test_read_block_fails_wrong_arguments(self, pydiabas, msd80):
+        msd80.set_block(pydiabas, TestMSD80.READINGS_NO_LOOKUP_A)
+        msd80._block = msd80._block[:-2]
+        with pytest.raises(BlockReadError):
+            msd80.read_block(pydiabas)
+
+    def test_read_test_with_multiple_lookups(self, pydiabas, msd80):
+        try:
+            msd80.set_block(pydiabas, TestMSD80.READINGS_MULTIPLE_LOOKUPS_A)
+        except BlockCreateError:
+            pass
+
+        msd80._block = TestMSD80.READINGS_MULTIPLE_LOOKUPS_A
+        with pytest.raises(BlockCreateError):
+            msd80.read_block(pydiabas)
+
     def test_read_no_lookup(self, pydiabas, msd80):
         result = msd80.read(pydiabas, TestMSD80.READINGS_NO_LOOKUP_A)
         assert isinstance(result, Result)
@@ -105,7 +130,7 @@ class TestMSD80():
         assert msd80._block == []
         assert callable(msd80._last_read_function)
         assert last_read_function_1 is not msd80._last_read_function
-    
+
     def test_read_single_lookup(self, pydiabas, msd80):
         result = msd80.read(pydiabas, TestMSD80.READINGS_SINGLE_LOOKUP_A)
         assert isinstance(result, Result)
@@ -117,7 +142,7 @@ class TestMSD80():
         assert msd80._block == []
         assert callable(msd80._last_read_function)
         assert last_read_function_1 is not msd80._last_read_function
-    
+
     def test_read_multiple_lookups(self, pydiabas, msd80):
         result = msd80.read(pydiabas, TestMSD80.READINGS_MULTIPLE_LOOKUPS_A)
         assert isinstance(result, Result)
@@ -129,11 +154,11 @@ class TestMSD80():
         assert msd80._block == []
         assert callable(msd80._last_read_function)
         assert last_read_function_1 is not msd80._last_read_function
-    
+
     def test_read_invalid_value(self, pydiabas, msd80):
         with pytest.raises(ValueReadError):
             msd80.read(pydiabas, TestMSD80.READINGS_PARTLY_INVALID)
-    
+
     def test_read_auto_no_lookup(self, pydiabas, msd80):
         result = msd80.read_auto(pydiabas, TestMSD80.READINGS_NO_LOOKUP_A)
         assert isinstance(result, Result)
@@ -145,7 +170,7 @@ class TestMSD80():
         assert msd80._block == TestMSD80.READINGS_NO_LOOKUP_B
         assert callable(msd80._last_read_function)
         assert last_read_function_1 is not msd80._last_read_function
-    
+
     def test_read_auto_single_lookup(self, pydiabas, msd80):
         result = msd80.read_auto(pydiabas, TestMSD80.READINGS_SINGLE_LOOKUP_A)
         assert isinstance(result, Result)
@@ -157,7 +182,7 @@ class TestMSD80():
         assert msd80._block == TestMSD80.READINGS_SINGLE_LOOKUP_B
         assert callable(msd80._last_read_function)
         assert last_read_function_1 is not msd80._last_read_function
-    
+
     def test_read_auto_multiple_lookups(self, pydiabas, msd80):
         result = msd80.read_auto(pydiabas, TestMSD80.READINGS_MULTIPLE_LOOKUPS_A)
         assert isinstance(result, Result)
@@ -169,16 +194,21 @@ class TestMSD80():
         assert msd80._block == []
         assert callable(msd80._last_read_function)
         assert last_read_function_1 is not msd80._last_read_function
-    
+
     def test_read_auto_invalid_value(self, pydiabas, msd80):
         with pytest.raises(ValueReadError):
             msd80.read_auto(pydiabas, TestMSD80.READINGS_PARTLY_INVALID)
-    
+
+    def test_read_auto_multiple_times(self, pydiabas, msd80):
+        # Test for coverage, used read_block the second time
+        msd80.read_auto(pydiabas, TestMSD80.READINGS_NO_LOOKUP_A)
+        msd80.read_auto(pydiabas, TestMSD80.READINGS_NO_LOOKUP_A)
+
     def test_read_again(self, pydiabas, msd80):
         msd80.read_auto(pydiabas, TestMSD80.READINGS_NO_LOOKUP_A)
         result = msd80.read_again()
         assert isinstance(result, Result)
-    
+
     def test_read_again_fails(self, pydiabas, msd80):
         with pytest.raises(ValueReadError):
             msd80.read_again()

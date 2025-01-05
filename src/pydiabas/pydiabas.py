@@ -11,9 +11,9 @@ from .exceptions import StateError, ConfigError
 class PyDIABAS:
     """Class for simplified interaction with the EDIABAS API."""
 
-    def __init__(self) -> PyDIABAS:
+    def __init__(self) -> None:
         self._ediabas = ediabas.EDIABAS()
-        self._config = {}
+        self._config: dict = {}
 
     def __enter__(self) -> PyDIABAS:
         # Initialize EDIABAS API session
@@ -23,7 +23,6 @@ class PyDIABAS:
     def __exit__(self, exc_type, exc_value, exc_traceback) -> None:
         # Terminate EDIABAS API session
         self.end()
-        return False
 
     @property
     def ready(self) -> bool:

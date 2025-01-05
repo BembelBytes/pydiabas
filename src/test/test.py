@@ -14,13 +14,13 @@ Make sure to use a 32bit python version when running these test!
 
 COMMANDS
 To run all the test which do NOT need a connection to a car please use:
-    > python -W always -m pytest test                   => All tests
-    > python -W always -m pytest test -m offline        => Only test that need no car connected
-    > python -W always -m pytest test -m msd80          => Only MSD80 tests
+    > python -Wa -m pytest test                   => All tests
+    > python -Wa -m pytest test -m offline        => Only test that need no car connected
+    > python -Wa -m pytest test -m msd80          => Only MSD80 tests
 """
 
 
 @pytest.mark.offline
-class TestPythonVersion():
+class TestPythonVersion:
     def test_python_version(self):
         assert len(hex(id(None))) == 10

@@ -5,7 +5,7 @@ from pydiabas.ediabas import EDIABAS
 
 
 @pytest.mark.offline
-class TestRow():
+class TestRow:
     def test_row(self):
         r1 = Row(name="one", value="1")
         r2 = Row(name="two", value="2")
@@ -16,7 +16,7 @@ class TestRow():
 
 
 @pytest.mark.offline
-class TestSet():
+class TestSet:
     def test___init__(self):
         s = Set()
         assert isinstance(s, Set)
@@ -73,12 +73,12 @@ class TestSet():
         assert s.index("one", 0, 1) == 0
         assert s.index("two", 0, 2) == 1
         assert s.index("two", 2, 3) == 2
-    
+
     def test_index_no_result(self):
         s = Set()
         with pytest.raises(ValueError):
             s.index("test")
-    
+
     def test_index_no_string(self):
         s = Set()
         with pytest.raises(TypeError):
@@ -145,7 +145,7 @@ class TestSet():
         s = Set()
         with pytest.raises(TypeError):
             s[b"five"]
-    
+
     def test_get(self):
         r1 = Row(name="one", value="1")
         r2 = Row(name="one", value=1)
@@ -153,14 +153,57 @@ class TestSet():
         assert s.get("one") == "1"
         assert s.get("four") == None
         assert s.get("four", default=4) == 4
-    
+
     def test_get_wrong_type(self):
         r1 = Row(name="one", value="1")
         r2 = Row(name="one", value=1)
         s = Set(rows=[r1, r2])
         with pytest.raises(TypeError):
             s.get(1)
-    
+
+    def test_get_in(self):
+        r1 = Row(name="stat_one_value", value="1")
+        r2 = Row(name="name_two", value=2)
+        s = Set(rows=[r1, r2])
+        assert s.get_in("stat_one_value") == "1"
+        assert s.get_in("one_value") == "1"
+        assert s.get_in("stat_one") == "1"
+        assert s.get_in("one") == "1"
+        assert s.get_in("statonevalue") is None
+        assert s.get_in("stat_one_value_") is None
+
+    def test_get_in_wrong_type(self):
+        r1 = Row(name="stat_one_value", value="1")
+        r2 = Row(name="name_two", value=2)
+        s = Set(rows=[r1, r2])
+        with pytest.raises(TypeError):
+            s.get_in(22)
+
+    def test_get_fn(self):
+        def fn_len_8(name):
+            return len(name) == 8
+
+        def fn_starts_with(name):
+            return name.startswith("stat_")
+
+        def fn_len_10(name):
+            return len(name) == 10
+
+        r1 = Row(name="stat_one_value", value="1")
+        r2 = Row(name="name_two", value=2)
+        s = Set(rows=[r1, r2])
+        assert s.get_fn(fn_len_8) == 2
+        assert s.get_fn(fn_starts_with) == "1"
+        assert s.get_fn(fn_len_10) is None
+        assert s.get_fn(lambda x: x.endswith("_two")) == 2
+
+    def test_get_fn_wrong_type(self):
+        r1 = Row(name="stat_one_value", value="1")
+        r2 = Row(name="name_two", value=2)
+        s = Set(rows=[r1, r2])
+        with pytest.raises(TypeError):
+            s.get_fn("TEST")
+
     def test___len__(self):
         r1 = Row(name="one", value="1")
         r2 = Row(name="one", value=1)
@@ -168,7 +211,7 @@ class TestSet():
         assert len(s) == 2
         s._rows = []
         assert len(s) == 0
-    
+
     def test___bool__(self):
         r1 = Row(name="one", value="1")
         r2 = Row(name="one", value=1)
@@ -176,7 +219,7 @@ class TestSet():
         assert bool(s)
         s._rows = []
         assert not bool(s)
-    
+
     def test___iter__(self):
         r1 = Row(name="one", value="1")
         r2 = Row(name="one", value=1)
@@ -188,7 +231,10 @@ class TestSet():
         r1 = Row(name="one", value="1")
         r2 = Row(name="two", value=2)
         s = Set(rows=[r1, r2])
-        assert s.__str__() == "one                           : 1\ntwo                           : 2\n"
+        assert (
+            s.__str__()
+            == "one                           : 1\ntwo                           : 2\n"
+        )
         s._rows = []
         assert s.__str__() == "\n"
 
@@ -215,7 +261,7 @@ class TestSet():
 
 
 @pytest.mark.offline
-class TestResult():
+class TestResult:
 
     @pytest.fixture(scope="function")
     def r_tmode_lese_interface_typ(self, pydiabas):
@@ -232,7 +278,14 @@ class TestResult():
         r_simulation._jobSets = [
             Set(rows=[Row(name="R1", value=1)]),
             Set(rows=[Row(name="R1", value=2), Row(name="R2", value=3)]),
-            Set(rows=[Row(name="R1", value=3), Row(name="R2", value=4), Row(name="R3", value=5)])
+            Set(
+                rows=[
+                    Row(name="R1", value=3),
+                    Row(name="R2", value=4),
+                    Row(name="R3", value=5),
+                ]
+            ),
+            Set(rows=[Row(name="STAT_R4_MEAN_WERT", value=3)]),
         ]
         return r_simulation
 
@@ -240,7 +293,6 @@ class TestResult():
     def r_empty(self, pydiabas):
         r_empty = Result(ediabas=pydiabas._ediabas)
         return r_empty
-
 
     def test___init__(self, pydiabas, r_empty):
         assert isinstance(r_empty, Result)
@@ -266,18 +318,24 @@ class TestResult():
         r.fetchname("AUTHOR")
         assert len(r) == 1
         assert len(r[0]) == 1
-        assert r[0].as_dict() == {'AUTHOR': 'Softing Ta, Softing WT'}
+        assert r[0].as_dict() == {"AUTHOR": "Softing Ta, Softing WT"}
         assert "AUTHOR" in r._jobSets[0]
         r.fetchname("SPRACHE")
         assert len(r) == 1
         assert len(r[0]) == 2
-        assert r[0].as_dict() == {'AUTHOR': 'Softing Ta, Softing WT', 'SPRACHE': 'deutsch'}
+        assert r[0].as_dict() == {
+            "AUTHOR": "Softing Ta, Softing WT",
+            "SPRACHE": "deutsch",
+        }
         assert "AUTHOR" in r._jobSets[0]
         assert "SPRACHE" in r._jobSets[0]
         r.fetchname("SPRACHE")
         assert len(r) == 1
         assert len(r[0]) == 2
-        assert r[0].as_dict() == {'AUTHOR': 'Softing Ta, Softing WT', 'SPRACHE': 'deutsch'}
+        assert r[0].as_dict() == {
+            "AUTHOR": "Softing Ta, Softing WT",
+            "SPRACHE": "deutsch",
+        }
 
         r2 = pydiabas.job(ecu="TMODE", job="_JOBS", fetchall=False)
         assert not r2
@@ -291,8 +349,7 @@ class TestResult():
         assert "AUTHOR" not in r._jobSets[1]
         assert "SPRACHE" not in r._jobSets[1]
         assert "JOBNAME" in r._jobSets[1]
-        
-    
+
     def test_fetchset_0(self, pydiabas):
         r = pydiabas.job(ecu="TMODE", job="_JOBS", fetchall=False)
         r._fetchset(i_set=0)
@@ -300,7 +357,7 @@ class TestResult():
         assert len(r) == 0
         with pytest.raises(KeyError):
             r["JOBNAME"]
-    
+
     def test_fetchset_1(self, pydiabas):
         r = pydiabas.job(ecu="TMODE", job="_JOBS", fetchall=False)
         r._fetchset(i_set=1)
@@ -309,9 +366,14 @@ class TestResult():
         assert len(r) == 1
         with pytest.raises(KeyError):
             r._systemSet["OBJECT"]
-    
+
     def test_fetchset_1_multiple_rows(self, pydiabas):
-        r = pydiabas.job(ecu="TMODE", job="_JOBCOMMENTS", parameters="SETZE_TRAP_MASK_REGISTER", fetchall=False)
+        r = pydiabas.job(
+            ecu="TMODE",
+            job="_JOBCOMMENTS",
+            parameters="SETZE_TRAP_MASK_REGISTER",
+            fetchall=False,
+        )
         r._fetchset(i_set=1)
         assert r["JOBCOMMENT0"] is not None
         assert r["JOBCOMMENT1"] is not None
@@ -320,7 +382,7 @@ class TestResult():
         assert len(r) == 1
         with pytest.raises(KeyError):
             r._systemSet["OBJECT"]
-    
+
     def test_fetchset_2(self, pydiabas):
         r = pydiabas.job(ecu="TMODE", job="_JOBS", fetchall=False)
         r._fetchset(i_set=2)
@@ -329,7 +391,7 @@ class TestResult():
         assert len(r) == 2
         with pytest.raises(KeyError):
             r[0]["JOBNAME"]
-    
+
     def test_fetchset_2_and_4(self, pydiabas):
         r = pydiabas.job(ecu="TMODE", job="_JOBS", fetchall=False)
         r._fetchset(i_set=2)
@@ -345,14 +407,14 @@ class TestResult():
         r = pydiabas.job(ecu="TMODE", job="LESE_INTERFACE_TYP", fetchall=False)
         with pytest.raises(IndexError):
             r._fetchset(2)
-    
+
     def test_fetchsystem(self, pydiabas):
         r = pydiabas.job(ecu="TMODE", job="_JOBS", fetchall=False)
         r.fetchsystemset()
         assert r._systemSet["OBJECT"] == "tmode"
         with pytest.raises(KeyError):
             r["JOBNAME"]
-    
+
     def test_fetchjobsets(self, pydiabas):
         r = pydiabas.job(ecu="TMODE", job="_JOBS", fetchall=False)
         r.fetchjobsets()
@@ -362,13 +424,13 @@ class TestResult():
         assert r[len(r) - 1]["JOBNAME"] is not None
         with pytest.raises(KeyError):
             r._systemSet["OBJECT"]
-    
+
     def test_fetchall(self, pydiabas):
         r = pydiabas.job(ecu="TMODE", job="LESE_INTERFACE_TYP", fetchall=False)
         r.fetchall()
         assert r["TYP"] == b"OBD"
         assert r._systemSet["OBJECT"] == "tmode"
-    
+
     def test_fetchall_multiple_sets(self, pydiabas):
         r = pydiabas.job(ecu="TMODE", job="_JOBS", fetchall=False)
         r.fetchall()
@@ -409,9 +471,14 @@ class TestResult():
         r.fetchnames(["Y", "X"])
         with pytest.raises(KeyError):
             r["TYP"]
-    
+
     def test_fetchname_after_fetchset(self, pydiabas):
-        r = pydiabas.job(ecu="TMODE", job="_JOBCOMMENTS", parameters="SETZE_TRAP_MASK_REGISTER", fetchall=False)
+        r = pydiabas.job(
+            ecu="TMODE",
+            job="_JOBCOMMENTS",
+            parameters="SETZE_TRAP_MASK_REGISTER",
+            fetchall=False,
+        )
         r._fetchset(i_set=1)
         assert len(r) == 1
         assert len(r[0]) == 2
@@ -424,7 +491,12 @@ class TestResult():
         assert "JOBCOMMENT1" in r
 
     def test_fetchset_after_fetchname(self, pydiabas):
-        r = pydiabas.job(ecu="TMODE", job="_JOBCOMMENTS", parameters="SETZE_TRAP_MASK_REGISTER", fetchall=False)
+        r = pydiabas.job(
+            ecu="TMODE",
+            job="_JOBCOMMENTS",
+            parameters="SETZE_TRAP_MASK_REGISTER",
+            fetchall=False,
+        )
         r.fetchname("JOBCOMMENT0")
         assert len(r) == 1
         assert len(r[0]) == 1
@@ -446,10 +518,7 @@ class TestResult():
         assert r_empty.systemSet.all == []
 
     def test_jobSets(self, r_tmode_lese_interface_typ):
-        assert (
-            r_tmode_lese_interface_typ._jobSets
-            == r_tmode_lese_interface_typ.jobSets
-        )
+        assert r_tmode_lese_interface_typ._jobSets == r_tmode_lese_interface_typ.jobSets
 
     def test_jobSets_empty(self, r_empty):
         assert r_empty.jobSets == []
@@ -471,10 +540,16 @@ class TestResult():
 
     def test_jobstatus_empty(self, r_empty):
         assert r_empty.jobstatus is None
-    
+
     def test_as_dicts(self, r_simulation):
-        assert r_simulation.as_dicts() == [{'SYS': 'TEM'}, {'R1': 1}, {'R1': 2, 'R2': 3}, {'R1': 3, 'R2': 4, 'R3': 5}]
-     
+        assert r_simulation.as_dicts() == [
+            {"SYS": "TEM"},
+            {"R1": 1},
+            {"R1": 2, "R2": 3},
+            {"R1": 3, "R2": 4, "R3": 5},
+            {"STAT_R4_MEAN_WERT": 3},
+        ]
+
     def test_as_dicts_empty(self, r_empty):
         assert r_empty.as_dicts() == [{}]
 
@@ -485,13 +560,13 @@ class TestResult():
         assert r_simulation.count("R2") == 2
         assert r_simulation.count("r2") == 2
         assert r_simulation.count("r3") == 1
-    
+
     def test_count_empty(self, r_empty):
         assert r_empty.count("X") == 0
         assert r_empty.count("SYS") == 0
         assert r_empty.count("R1") == 0
         assert r_empty.count("R2") == 0
-    
+
     def test_count_wring_type(self, r_empty):
         with pytest.raises(TypeError):
             r_empty.count(1)
@@ -524,7 +599,7 @@ class TestResult():
         assert r_simulation["R1"] == 1
         assert r_simulation["r2"] == 3
         assert r_simulation[0] == r_simulation._jobSets[0]
-        assert r_simulation[-1] == r_simulation._jobSets[2]
+        assert r_simulation[-1] == r_simulation._jobSets[3]
         assert r_simulation[:]._jobSets == r_simulation._jobSets
         assert r_simulation[:]._systemSet == r_simulation._systemSet
         assert id(r_simulation[:]._jobSets) != id(r_simulation._jobSets)
@@ -535,19 +610,19 @@ class TestResult():
         assert r_simulation[2:10]._systemSet == r_simulation_sliced_2._systemSet
         assert r_simulation[::2]._jobSets == r_simulation_sliced_3._jobSets
         assert r_simulation[::2]._systemSet == r_simulation_sliced_3._systemSet
-    
+
     def test___getitem___wrong_type(self, r_simulation):
         with pytest.raises(TypeError):
             r_simulation[1.2]
-    
+
     def test___getitem___index_out_of_range(self, r_simulation):
         with pytest.raises(IndexError):
             r_simulation[4]
-    
+
     def test___getitem___key_error(self, r_simulation):
         with pytest.raises(KeyError):
             r_simulation["XX"]
-    
+
     def test___getitem___key_error_on_systemSet(self, r_simulation):
         with pytest.raises(KeyError):
             r_simulation["SYS"]
@@ -570,27 +645,67 @@ class TestResult():
         assert r_simulation.get("r2", default="TEST") == 3
         assert r_simulation.get("SYS") == None
         assert r_simulation.get("SYS", default="TEST") == "TEST"
-    
+
     def test_get_wrong_type(self, r_simulation):
         with pytest.raises(TypeError):
             r_simulation.get(1)
-    
+
+    def test_get_in(self, r_simulation):
+        assert r_simulation.get_in("R1") == 1
+        assert r_simulation.get_in("R1", default="TEST") == 1
+        assert r_simulation.get_in("r2") == 3
+        assert r_simulation.get_in("r2", default="TEST") == 3
+        assert r_simulation.get_in("SYS") == None
+        assert r_simulation.get_in("SYS", default="TEST") == "TEST"
+        assert r_simulation.get_in("STAT_R4_MEAN_WERT") == 3
+        assert r_simulation.get_in("STAT_r4_MeaN_WERT") == 3
+        assert r_simulation.get_in("STAT_R4_MEAN") == 3
+        assert r_simulation.get_in("R4_MEAN_WERT") == 3
+        assert r_simulation.get_in("R4_MEAN") == 3
+        assert r_simulation.get_in("R4_MEA_") is None
+        assert r_simulation.get_in("_4_MEAN") is None
+        assert r_simulation.get_in("_STAT_R4_MEAN_WERT") is None
+
+    def test_get_in_wrong_type(self, r_simulation):
+        with pytest.raises(TypeError):
+            r_simulation.get_in(22)
+
+    def test_get_fn(self, r_simulation):
+        def fn_len_2(name):
+            return len(name) == 2
+
+        def fn_starts_with(name):
+            return name.startswith("STAT_")
+
+        def fn_len_40(name):
+            return len(name) == 40
+
+        assert r_simulation.get_fn(fn_len_2) == 1
+        assert r_simulation.get_fn(fn_starts_with) == 3
+        assert r_simulation.get_fn(fn_len_40) is None
+        assert r_simulation.get_fn(lambda x: x.endswith("_WERT")) == 3
+
+    def test_get_fn_wrong_type(self, r_simulation):
+        with pytest.raises(TypeError):
+            r_simulation.get_fn("TEST")
+
     def test___len__(self, r_simulation, r_empty):
-        assert len(r_simulation) == 3
+        assert len(r_simulation) == 4
         assert len(r_empty) == 0
-        
+
     def test___bool__(self, r_simulation, r_tmode__jobs, r_empty):
         assert r_simulation
         assert r_tmode__jobs
         assert not r_empty
-    
+
     def test___iter__(self, r_simulation):
         for i, s in enumerate(r_simulation):
             assert s == r_simulation._jobSets[i]
 
     def test___str__(self, r_simulation, r_empty):
-        assert str(r_simulation) ==\
-"""
+        assert (
+            str(r_simulation)
+            == """
 ============== PyDIABAS Result ==============
 -------------- systemSet       --------------
 SYS                           : TEM
@@ -603,12 +718,16 @@ R2                            : 3
 R1                            : 3
 R2                            : 4
 R3                            : 5
+-------------- jobSet #3       --------------
+STAT_R4_MEAN_WERT             : 3
 ============== END             ==============
 """
-        
+        )
 
-        assert str(r_empty) ==\
-"""
+        assert (
+            str(r_empty)
+            == """
 ============== PyDIABAS Result ==============
 ============== END             ==============
 """
+        )
