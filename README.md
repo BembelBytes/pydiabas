@@ -23,10 +23,11 @@ Using this module makes it possible to make advantage of the comfort features of
         - [ECU class](#ecu-class)
         - [MSD80 class](#msd80-class)
 6. [Tests](#6-tests)
-7 [Limitations](#7-limitations)
+7. [Limitations](#7-limitations)
 8. [Future Development](#8-future-development)
 9. [EDIABAS Troubleshooting](#9-ediabas-troubleshooting)
 10. [License](#10-license)
+11. [Change Log](#11-change-log)
 
 ## 1 General Description
 The **pydiabas** module has two sub modules:
@@ -618,6 +619,52 @@ for job_set in result:
 > 0
 >```
 
+> **get_in(pattern, [default=None])** -> *int* | *str* | *bytes* | *float* | *None*
+>
+> Gets the value of the first *Row* partially matching the given name starting from the first *jobSet* to the last.
+> Any further occurrences of the name in other *jobSets* will be ignored.
+> A default value can be set to be returned in case no matching *Row* can be found instead of returning *None*.
+>
+> Parameter **pattern** must be a *str*.  
+> Optional parameter **default** can be of any type.  
+> **Returns** the value if the *Row* or the default value.
+> ```
+> >>> result.get_in("JOBNAME")
+> '_JOBS'
+>
+> >>> result.get_in("JOB")
+> '_JOBS'
+>
+> >>> result.get_in("NAME")
+> '_JOBS'
+>
+> >>> result.get_in("JOBNAMES")
+> None
+>
+> >>> result.get_in("JOBNAMES", default=0)
+> 0
+>```
+
+> **get_fn(fn, [default=None])** -> *int* | *str* | *bytes* | *float* | *None*
+>
+> Gets the value of the first *Row* where the given function returns True when the *Rows* name is passed as parameter starting from the first *Row* to the last.
+> Any further occurrences of the name in other *jobSets* will be ignored.
+> A default value can be set to be returned in case no matching *Row* can be found instead of returning *None*.
+>
+> Parameter **fn** must be a *Callable*.  
+> Optional parameter **default** can be of any type.  
+> **Returns** the value if the *Row* or the default value.
+> ```
+> >>> result.get_fn(lambda name: name.startswith("JOB))
+> '_JOBS'
+>
+> >>> result.get_fn(lambda name: len(name) == 4)
+> 'INFO'
+>
+> >>> result.get_fn(lambda name: name == "TEST")
+> None
+>```
+
 
 #### Set class
 Is part of a *Result's* data structure and represents a set of data coming back from the **EDIABAS** job.  
@@ -769,6 +816,50 @@ for row in system_set:
 >
 > >>> system_set.get("TEST", default=0)
 > 0
+>```
+
+> **get_in(pattern, [default=None])** -> *int* | *str* | *bytes* | *float* | *None*
+>
+> Gets the value of the first *Row* matching the given pattern starting from the first *Row* to the last.
+> A default value can be set to be returned in case no matching *Row* can be found instead of returning *None*.
+>
+> Parameter **pattern** must be a *str*.  
+> Optional parameter **default** can be of any type.  
+> **Returns** the value if the *Row* or the default value.
+> ```
+> >>> system_set.get_in("JOBNAME")
+> '_JOBS'
+>
+> >>> system_set.get_in("JOB")
+> '_JOBS'
+>
+> >>> system_set.get_in("NAME")
+> '_JOBS'
+>
+> >>> system_set.get_in("JOBNAMES")
+> None
+>
+> >>> system_set.get_in("JOBNAMES", default=0)
+> 0
+>```
+
+> **get_fn(fn, [default=None])** -> *int* | *str* | *bytes* | *float* | *None*
+>
+> Gets the value of the first *Row* where the given function returns True when the *Rows* name is passed as parameter starting from the first *Row* to the last.
+> A default value can be set to be returned in case no matching *Row* can be found instead of returning *None*.
+>
+> Parameter **fn** must be a *Callable*.  
+> Optional parameter **default** can be of any type.  
+> **Returns** the value if the *Row* or the default value.
+> ```
+> >>> system_set.get_fn(lambda name: name.startswith("JOB))
+> '_JOBS'
+>
+> >>> system_set.get_fn(lambda name: len(name) == 6)
+> 25
+>
+> >>> system_set.get_fn(lambda name: name == "TEST")
+> None
 >```
 
 
@@ -1120,22 +1211,27 @@ Is just a wrapper around the `api32.dll` library, loading this library and extra
 ## 6 Tests
 There are test which can be run without being connected to an ECU and some other tests need a specific ECU to be connected.  
 A working **EDIABAS** system ist required. To solve the most common communication problems with **EDIABAS** please consult the section [EDIABAS Troubleshooting](#8-ediabas-troubleshooting). Steps 1-3 must be completed successful to run the offline test and steps 4-5 in addition to be able to run online tests.
-The test must be executed using `unittest` on a 32bit python version.
+The test must be executed using `pytest` on a 32bit python version.
+Current test coverage is 99%.
+Use the following command to run all test
+```
+python -Wa -m pytest test
+```
 
 ### Offline Tests
 These test do not need a to have an ECU connected.
 These test cover the behavior of all the classes, methods and properties as well as the connection between **pydiabas** and **EDIABAS**.
 Use the following command to rund all offline test at once:
 ```
-python -m unittest test
+python -Wa -m pytest test -m offline
 ```
 
-### Online Tests
-Test which require an ECU to be connected have to be run manually.  
-They can be found in the `test/test_ecu` folder.
+### MSD80 Tests
+Test which require an MSD80 ECU to be connected have to be run manually.
+These test cover the *MSD80* Class as well as some parts of the *ECU* class that need a ECU to be connected to extract table data.
 Use the following command to manually run the test for the MSD80:
 ```
-python -m unittest test.test_ecu.test_msd80
+python -Wa -m pytest test -m msd80
 ```
 
 ## 7 Limitations
@@ -1262,3 +1358,20 @@ Permission is hereby granted, free of charge, to any person obtaining a copy of 
 The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 
 THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+## 11 Change Log
+### 1.1.0
+- New methods *get_in()* and *get_fn()* for *Result* and *Set* class.
+- Minor BUGFIXES in Tests
+- Tested on Python 3.13.1 32bit
+- Tests moved from unittest to pytest
+- Increased test coverage to 99%
+- Using black for code styling
+
+### 1.0.1
+- Reorganized project structure to publish pydiabas as package via PyPi
+- Added installation instructions to README
+
+
+### 1.0.0
+- Initial Release
