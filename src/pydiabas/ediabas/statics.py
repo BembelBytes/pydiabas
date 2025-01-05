@@ -59,7 +59,7 @@ class API_BOOL(enum.IntEnum):
 
 
 # API error code translations
-class EDIABAS_ERROR(enum.IntEnum):    
+class EDIABAS_ERROR(enum.IntEnum):
     ERR_NONE = 0
     RESERVED = 1
     ERROR_CODE_OUT_OF_RANGE = 2

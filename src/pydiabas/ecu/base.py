@@ -7,25 +7,21 @@ from ..pydiabas import PyDIABAS, StateError
 from ..result import Set
 
 
-class ECU():
-
-    """Represents a ECU and provides functionality to be used with any BEST ECU.
-    """
+class ECU:
+    """Represents a ECU and provides functionality to be used with any BEST ECU."""
 
     # ECU name
     name: str = ""
 
     def __init__(self, name: Optional[str] = None) -> None:
-
-        """Initializes a new instance and sets name if given.
-        """
+        """Initializes a new instance and sets name if given."""
 
         if name is not None:
             self.name = name
-        
 
-    def get_jobs(self, pydiabas: PyDIABAS, details: bool = True, verbose: bool = False) -> dict[dict]:
-
+    def get_jobs(
+        self, pydiabas: PyDIABAS, details: bool = True, verbose: bool = False
+    ) -> dict[dict]:
         """Gets names of all available jobs in the ecu. If details ar set to True, additional job information will be
         added to each job if available in the ecu.
 
@@ -49,22 +45,23 @@ class ECU():
         if details:
             # Get additional data for all found jobs
             for n, job in enumerate(jobs):
-                
+
                 # Get job comments, argument and return value information
                 jobs[job] = self.get_job_details(pydiabas, job)
 
                 if verbose:
                     percent: int = round(100 * (n + 1) / len(jobs))
-                    print(f"\r[{'=' * (percent // 2)}{' ' * (50 - (percent // 2))}] {percent:3d}% complete", end="")
+                    print(
+                        f"\r[{'=' * (percent // 2)}{' ' * (50 - (percent // 2))}] {percent:3d}% complete",
+                        end="",
+                    )
 
         if verbose:
             print("\nDone!")
-        
+
         return jobs
-    
 
     def get_job_details(self, pydiabas: PyDIABAS, job: str) -> dict:
-
         """Get additional info about a job available in the ECU like:
             Job comments
             Job arguments, their name, type and comments about it
@@ -78,7 +75,7 @@ class ECU():
         Return values:
         result: Job info in a dict.
         """
-        
+
         info: dict[list] = {
             "comments": [],
             "arguments": [],
@@ -89,9 +86,9 @@ class ECU():
             # All comments will be stored in set 1
             comments: Set = pydiabas.job(self.name, "_JOBCOMMENTS", job)[0]
             info["comments"] = [
-                comments[key] for key in sorted(
-                    comments.keys(),
-                    key=lambda x: int(x.replace("JOBCOMMENT", ""))
+                comments[key]
+                for key in sorted(
+                    comments.keys(), key=lambda x: int(x.replace("JOBCOMMENT", ""))
                 )
             ]
         except (StateError, IndexError):
@@ -100,29 +97,43 @@ class ECU():
         # Argument and result info will be stored in set 1-n
         try:
             arguments: list[Set] = pydiabas.job(self.name, "_ARGUMENTS", job)
-            info["arguments"] = [{
-                "name": arguments[i]["ARG"],
-                "type": arguments[i]["ARGTYPE"],
-                "comments": [arguments[i][key] for key in arguments[i].keys() if key.startswith("ARGCOMMENT")]
-            } for i in range(len(arguments))]
+            info["arguments"] = [
+                {
+                    "name": arguments[i]["ARG"],
+                    "type": arguments[i]["ARGTYPE"],
+                    "comments": [
+                        arguments[i][key]
+                        for key in arguments[i].keys()
+                        if key.startswith("ARGCOMMENT")
+                    ],
+                }
+                for i in range(len(arguments))
+            ]
         except (StateError, IndexError):
             pass
 
         try:
             results: list[Set] = pydiabas.job(self.name, "_RESULTS", job)
-            info["results"] = [{
-                "name": results[i]["RESULT"],
-                "type": results[i]["RESULTTYPE"],
-                "comments": [results[i][key] for key in results[i].keys() if key.startswith("RESULTCOMMENT")]
-            } for i in range(len(results))]
+            info["results"] = [
+                {
+                    "name": results[i]["RESULT"],
+                    "type": results[i]["RESULTTYPE"],
+                    "comments": [
+                        results[i][key]
+                        for key in results[i].keys()
+                        if key.startswith("RESULTCOMMENT")
+                    ],
+                }
+                for i in range(len(results))
+            ]
         except (StateError, IndexError):
             pass
 
         return info
-        
 
-    def get_tables(self, pydiabas: PyDIABAS, details: bool=True, verbose: bool=False) -> dict[dict]:
-
+    def get_tables(
+        self, pydiabas: PyDIABAS, details: bool = True, verbose: bool = False
+    ) -> dict[dict]:
         """Gets names of all available tables in the ecu. If details ar set to True, table header and body data
         will be added.
 
@@ -145,21 +156,22 @@ class ECU():
 
         if details:
             # Get additional information for all tables
-            for n, table in enumerate(tables):                
+            for n, table in enumerate(tables):
                 tables[table] = self.get_table_details(pydiabas, table)
 
                 if verbose:
-                    percent: int = round(100 *(n + 1) / len(tables))
-                    print(f"\r[{'=' * (percent // 2)}{' ' * (50 - (percent // 2))}] {percent:3d}% complete", end="")
-        
+                    percent: int = round(100 * (n + 1) / len(tables))
+                    print(
+                        f"\r[{'=' * (percent // 2)}{' ' * (50 - (percent // 2))}] {percent:3d}% complete",
+                        end="",
+                    )
+
         if verbose:
             print("\nDone!")
-        
+
         return tables
 
-
     def get_table_details(self, pydiabas: PyDIABAS, table: str) -> dict:
-
         """Get table header and body data from a table in the ecu.
         If the table does not exist, an empty data structure will be returned.
 
@@ -170,11 +182,8 @@ class ECU():
         Return values:
         result: Table header and body data in a dict.
         """
-        
-        info: dict[list] = {
-            "header": [],
-            "body": []
-        }
+
+        info: dict[list] = {"header": [], "body": []}
 
         try:
             contents: list[Set] = pydiabas.job(self.name, "_TABLE", table)
@@ -182,19 +191,20 @@ class ECU():
             body: list[Set] = contents[1:]
 
             info["header"] = [
-                headers[key] for key in sorted(
-                    headers.keys(),
-                    key=lambda x: int(x.replace("COLUMN", ""))
+                headers[key]
+                for key in sorted(
+                    headers.keys(), key=lambda x: int(x.replace("COLUMN", ""))
                 )
             ]
 
             info["body"] = [
                 [
-                    body[i][key] for key in sorted(
-                        body[i].keys(),
-                        key=lambda x: int(x.replace("COLUMN", ""))
+                    body[i][key]
+                    for key in sorted(
+                        body[i].keys(), key=lambda x: int(x.replace("COLUMN", ""))
                     )
-                ] for i in range(len(body))
+                ]
+                for i in range(len(body))
             ]
 
         except (StateError, IndexError):

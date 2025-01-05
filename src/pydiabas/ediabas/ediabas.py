@@ -9,12 +9,11 @@ from . import statics
 from .exceptions import JobFailedError, VersionCheckError
 
 
-class EDIABAS():
-    
+class EDIABAS:
     """Class to interact with the EDIABAS Api api32.dll
 
     Configuration options trough setConfig():
-        apiTrace: Controls the type and intensity (default: 0)  
+        apiTrace: Controls the type and intensity (default: 0)
             0 = OFF
             1-3 = user trace
             4-7 = api trace
@@ -45,12 +44,12 @@ class EDIABAS():
         IfhnTrace: Control of IFH network trace (default: 0)
             0 = OFF
             1-3: trace
-        
+
         IfhVersion: Version of current IFH
 
         Interface: Interface to be used (default: EDIC)
             STD:OBD: For D-CAN cable
-        
+
         IgnitionHandling: Handle ignition ON/OFF as an error (default: 1)
             0 = OFF
             1 = ON
@@ -58,7 +57,7 @@ class EDIABAS():
         LoadWin32: Win16 / Win32 selector (default: 1)
             0 = For Windows 95, 98, ME
             1 = For Windows NT, 2000, XP, Vista and on
-        
+
         LogLevel: Logging of fatal errors in EDIABAS.LOG (default: 0)
             0 = OFF
             1 = ON
@@ -116,17 +115,13 @@ class EDIABAS():
     """
 
     def __init__(self) -> None:
-
-        """Create an object to interact with the EDIABAS API.
-        """
+        """Create an object to interact with the EDIABAS API."""
 
         self._handle = ctypes.c_uint()
 
-
     def init(self) -> None:
-
         """Initializes the EDIABAS API and connects to the server.
-        
+
         Parameters:
         None
 
@@ -136,22 +131,20 @@ class EDIABAS():
         Raises:
             JobFailedError
         """
-        
+
         # Value of _handle will be set through side effect of apiInit function
         job_status = api32.apiInit(ctypes.byref(self._handle))
 
         if not job_status:
             raise JobFailedError
 
-
     def initExt(
         self,
-        ifh : str | bytes = b"",
-        deviceUnit : str | bytes = b"",
-        deviceApplication : str | bytes = b"",
-        configuration : str | bytes = b""
+        ifh: str | bytes = b"",
+        deviceUnit: str | bytes = b"",
+        deviceApplication: str | bytes = b"",
+        configuration: str | bytes = b"",
     ) -> None:
-
         """Initializes the EDIABAS API and connect to the server.
         All parameters are set to an empty string by default. If the function passes an empty string
         to the EDIABAS system, the values are set be EDIABAS according to system defaults or setting
@@ -159,7 +152,7 @@ class EDIABAS():
         The effect of the parameters deviceUnit and deviceApplication is not yet known and should not be used.
         To pass additional configuration setting the configuration parameter can be used. Multiple configuration
         data must be separated by semicolons like "apiTrace=7;TracePath=C:\\MyTrace\\EDIABAS" (not case sensitive).
-        
+
         Optional Parameters:
         ifh: Name of the interface handler to be used eg. "STD:OBD".
         deviceUnit: Name of the device (only one character). The effect of this parameter is not yet known.
@@ -185,33 +178,25 @@ class EDIABAS():
             ifh,
             deviceUnit,
             deviceApplication,
-            configuration
+            configuration,
         )
 
         if not job_status:
             raise JobFailedError
 
-
     def breakJob(self) -> None:
-
-        """Stops the current job. All results will be lost.
-        """
+        """Stops the current job. All results will be lost."""
 
         # Break the current job
         api32.apiBreak(self._handle)
 
-
     def end(self) -> None:
-
-        """Stops EDIABAS API and frees used memory again.
-        """
+        """Stops EDIABAS API and frees used memory again."""
 
         # Stop EDIABAS API
         api32.apiEnd(self._handle)
 
-
     def state(self) -> statics.API_STATE:
-
         """Retrieves current EDIABAS API state and returns the value as API_STATE IntEnum type.
 
         Return value:
@@ -224,12 +209,7 @@ class EDIABAS():
         # Return translated API state
         return statics.API_STATE(state)
 
-
-    def trace(
-        self,
-        text : str | bytes
-    ) -> None:
-
+    def trace(self, text: str | bytes) -> None:
         """Prints a message in the EDIABAS apiTrace.
 
         Parameters:
@@ -238,14 +218,12 @@ class EDIABAS():
 
         # Convert arguments to bytes if given as strings
         text = self._process_text_argument(text)
-        
+
         # Call function with encoded text (bytestring)
         api32.apiTrace(self._handle, text)
 
-
     @staticmethod
-    def checkVersion(min_version : str | bytes = "7.0") -> str:
-        
+    def checkVersion(min_version: str | bytes = "7.0") -> str:
         """Checks if the current EDIABAS version meets the required minimum version number.
         Only the first two parts of the version number are taken into account. So if 7.1.3 is passed
         as minimum version number and current version is 7.1.0 the version test is passed.
@@ -284,17 +262,12 @@ class EDIABAS():
         # Check if minimum version check has been passed
         if not job_status:
             raise VersionCheckError(f"EDIABAS Version < {min_version}")
-        
+
         # Return current version number as bytes
         else:
             return version.value.decode("UTF-8")
 
-
-    def getConfig(
-        self,
-        name: str | bytes
-    ) -> str:
-
+    def getConfig(self, name: str | bytes) -> str:
         """Retrieves the value of a configuration variable with the given name.
 
         Parameters:
@@ -302,7 +275,7 @@ class EDIABAS():
 
         Return values:
         value: Value of the configuration variable.
-        
+
         Raises:
             JobFailedError
         """
@@ -315,11 +288,7 @@ class EDIABAS():
 
         # Call the job and get save its return value
         # Variable value will be copied to cfg_value through side effect of the called function
-        job_status = api32.apiGetConfig(
-            self._handle,
-            name,
-            cfg_value
-        )
+        job_status = api32.apiGetConfig(self._handle, name, cfg_value)
 
         if not job_status:
             raise JobFailedError
@@ -327,20 +296,14 @@ class EDIABAS():
         # Transform the value into str and return
         return cfg_value.value.decode("UTF-8")
 
-
-    def setConfig(
-        self,
-        name : str | bytes,
-        value : str | bytes
-    ) -> None:
-
+    def setConfig(self, name: str | bytes, value: str | bytes) -> None:
         """Sets the value of a configuration variable.
         Changes are valid until the end of the API session.
 
         Parameters:
         name: Name of the configuration variable who's value is to be set.
         value: New value of the variable.
-        
+
         Raises:
             JobFailedError
         """
@@ -350,18 +313,12 @@ class EDIABAS():
         value = EDIABAS._process_text_argument(value)
 
         # Call job with encoded data and store its return value
-        job_status = api32.apiSetConfig(
-            self._handle,
-            name,
-            value
-        )
+        job_status = api32.apiSetConfig(self._handle, name, value)
 
         if not job_status:
             raise JobFailedError
 
-
     def errorCode(self) -> int:
-
         """Retrieves the error code from EDIABAS API.
 
         Return values:
@@ -374,9 +331,7 @@ class EDIABAS():
         # Return the received error code
         return error_code
 
-
     def errorText(self) -> str:
-
         """Retrieves the error text from EDIABAS API.
 
         Return values:
@@ -388,9 +343,7 @@ class EDIABAS():
 
         # Call the job and save the return value (Null or pointer to char array)
         job_status = api32.apiErrorText(
-            self._handle,
-            error_text,
-            ctypes.c_int(statics.API_MAX_TEXT)
+            self._handle, error_text, ctypes.c_int(statics.API_MAX_TEXT)
         )
 
         # Check if error is present
@@ -400,15 +353,13 @@ class EDIABAS():
         # Return error text as str
         return error_text.value.decode("UTF-8")
 
-
     def job(
         self,
-        ecu : str | bytes,
-        job_name : str | bytes,
-        job_param : str | bytes = b"",
-        results : str | bytes = b""
+        ecu: str | bytes,
+        job_name: str | bytes,
+        job_param: str | bytes = b"",
+        results: str | bytes = b"",
     ) -> None:
-
         """Sends a job via EDIABAS API to the selected ECU.
         ecu and job_name must at least be specified.
         Will NOT wait for the job result.
@@ -416,7 +367,7 @@ class EDIABAS():
         Parameters:
         ecu: Name of the ECU to which the job has to be send.
         job_name: Name of the job to be executed (not case sensitive).
-        
+
         Optional parameters:
         job_param: Parameters to be passed to the ECU.
         results: Results to be retrieved from the ECU. If "" is passed, all results will be retrieved.
@@ -429,23 +380,15 @@ class EDIABAS():
         results = EDIABAS._process_text_argument(results)
 
         # Send job to ECU
-        api32.apiJob(
-            self._handle,
-            ecu,
-            job_name,
-            job_param,
-            results
-        )
-
+        api32.apiJob(self._handle, ecu, job_name, job_param, results)
 
     def jobData(
         self,
-        ecu : str | bytes,
-        job_name : str | bytes,
-        job_param : str | bytes = b"",
-        results : str | bytes = b""
+        ecu: str | bytes,
+        job_name: str | bytes,
+        job_param: str | bytes = b"",
+        results: str | bytes = b"",
     ) -> None:
-
         """Sends a job via EDIABAS API to the selected ECU.
         ecu and job_name must at least be specified.
         Will NOT wait for the job result.
@@ -453,7 +396,7 @@ class EDIABAS():
         Parameters:
         ecu: Name of the ECU to which the job has to be send.
         job_name: Name of the job to be executed (not case sensitive).
-        
+
         Optional parameters:
         job_param: Parameters to be passed to the ECU.
         results: Results to be retrieved from the ECU. If "" is passed, all results will be retrieved.
@@ -464,7 +407,7 @@ class EDIABAS():
         job_name = EDIABAS._process_text_argument(job_name)
         job_param = EDIABAS._process_text_argument(job_param)
         results = EDIABAS._process_text_argument(results)
-        
+
         # Send job to ECU
         api32.apiJobData(
             self._handle,
@@ -472,19 +415,17 @@ class EDIABAS():
             job_name,
             job_param,
             ctypes.c_int(len(job_param)),
-            results
+            results,
         )
-
 
     def jobExt(
         self,
-        ecu : str | bytes,
-        job_name : str | bytes,
-        std_param : str | bytes = b"",
-        job_param : str | bytes = b"",
-        results : str | bytes = b""
+        ecu: str | bytes,
+        job_name: str | bytes,
+        std_param: str | bytes = b"",
+        job_param: str | bytes = b"",
+        results: str | bytes = b"",
     ) -> None:
-
         """Sends a job via EDIABAS API to the selected ECU.
         ecu and job_name must at least be specified.
         Will NOT wait for the job result.
@@ -494,7 +435,7 @@ class EDIABAS():
         Parameters:
         ecu: Name of the ECU to which the job has to be send.
         job_name (str): Name of the job to be executed (not case sensitive).
-        
+
         Optional parameters:
         std_param (str): Parameters to be passed to EDIABAS standart jobs.
         job_param (str and bytes): Parameters to be passed to the ECU.
@@ -507,7 +448,7 @@ class EDIABAS():
         std_param = EDIABAS._process_text_argument(std_param)
         job_param = EDIABAS._process_text_argument(job_param)
         results = EDIABAS._process_text_argument(results)
-        
+
         # Send job to ECU
         # Last parameter is always c_long(0) as it is not yet used by EDIABAS and reserved for further extension
         api32.apiJobData(
@@ -519,15 +460,10 @@ class EDIABAS():
             job_param,
             ctypes.c_int(len(job_param)),
             results,
-            ctypes.c_long(0)
+            ctypes.c_long(0),
         )
 
-
-    def jobInfo(
-        self,
-        text : bool = False
-    ) -> int | str:
-
+    def jobInfo(self, text: bool = False) -> int | str:
         """Retrieves the progress of the current job in percent and if requested additional text infos.
         If serving the progress of the job is not implemented in SGBD, the function will return -1.
 
@@ -542,10 +478,7 @@ class EDIABAS():
         info_text = ctypes.create_string_buffer(statics.API_MAX_TEXT)
 
         # Call job and receive return value, info_text will be set trough side effect of called function
-        job_status = api32.apiJobInfo(
-            self._handle,
-            info_text
-        )
+        job_status = api32.apiJobInfo(self._handle, info_text)
 
         # Return job status as str with additional info if requested by text parameter
         if text:
@@ -554,13 +487,7 @@ class EDIABAS():
         # Return job status as int
         return job_status
 
-
-    def resultBinary(
-        self,
-        name : str | bytes,
-        set : int = 1
-    ) -> bytes:
-
+    def resultBinary(self, name: str | bytes, set: int = 1) -> bytes:
         """Retrieves BINARY (unsigned byte) data from an API job result.
         name must be specified. If no set number is passed, set #1 is accessed by default.
 
@@ -569,10 +496,10 @@ class EDIABAS():
 
         Optional parameters:
         set: Number of result set to be accessed.
-        
+
         Return values:
         result: value of the requested result.
-        
+
         Raises:
             JobFailedError
         """
@@ -590,7 +517,7 @@ class EDIABAS():
             ctypes.byref(result),
             ctypes.byref(result_len),
             name,
-            ctypes.c_int(set)
+            ctypes.c_int(set),
         )
 
         # Check if date has been received
@@ -600,14 +527,9 @@ class EDIABAS():
         # Return result as bytes
         return result.value
 
-
     def resultBinaryExt(
-        self,
-        name : str | bytes,
-        set : int = 1,
-        max_length : int = statics.API_MAX_BINARY
+        self, name: str | bytes, set: int = 1, max_length: int = statics.API_MAX_BINARY
     ) -> bytes:
-
         """Retrieves BINARY (unsigned byte) data with a given maximum length from an API job result.
         name must be specified. If no set number is passed, set #1 is accessed by default.
 
@@ -617,10 +539,10 @@ class EDIABAS():
         Optional parameters:
         set: Number of result set to be accessed.
         length: Number of bytes to be read.
-        
+
         Return values:
         result: value of the requested result.
-        
+
         Raises:
             JobFailedError
         """
@@ -642,7 +564,7 @@ class EDIABAS():
             ctypes.byref(result_len),
             ctypes.c_ushort(max_length),
             name,
-            ctypes.c_int(set)
+            ctypes.c_int(set),
         )
 
         # Check if date has been received
@@ -652,13 +574,7 @@ class EDIABAS():
         # Return result as bytes
         return result.value
 
-
-    def resultByte(
-        self,
-        name : str | bytes,
-        set : int = 1
-    ) -> int:
-
+    def resultByte(self, name: str | bytes, set: int = 1) -> int:
         """Retrieves BYTE (unsigned byte) data from an API job result.
         name must be specified. If no set number is passed, set #1 is accessed by default.
 
@@ -667,10 +583,10 @@ class EDIABAS():
 
         Optional parameters:
         set: Number of result set to be accessed.
-        
+
         Return values:
         result: value of the requested result.
-        
+
         Raises:
             JobFailedError
         """
@@ -683,10 +599,7 @@ class EDIABAS():
 
         # Get the result from the ECU
         job_status = api32.apiResultByte(
-            self._handle,
-            ctypes.byref(result),
-            name,
-            ctypes.c_int(set)
+            self._handle, ctypes.byref(result), name, ctypes.c_int(set)
         )
 
         # Check if date has been received
@@ -696,13 +609,7 @@ class EDIABAS():
         # Return result as bytes
         return result.value
 
-
-    def resultChar(
-        self,
-        name : str | bytes,
-        set : int = 1
-    ) -> bytes:
-
+    def resultChar(self, name: str | bytes, set: int = 1) -> bytes:
         """Retrieves CHAR (char) data from an API job result.
         name must be specified. If no set number is passed, set #1 is accessed by default
 
@@ -711,10 +618,10 @@ class EDIABAS():
 
         Optional parameters:
         set (int): Number of result set to be accessed.
-        
+
         Return values:
         result: value of the requested result.
-        
+
         Raises:
             JobFailedError
         """
@@ -727,10 +634,7 @@ class EDIABAS():
 
         # Get the result from the ECU
         job_status = api32.apiResultChar(
-            self._handle,
-            ctypes.byref(result),
-            name,
-            ctypes.c_int(set)
+            self._handle, ctypes.byref(result), name, ctypes.c_int(set)
         )
 
         # Check if date has been received
@@ -740,13 +644,7 @@ class EDIABAS():
         # Return result as bytes
         return result.value
 
-
-    def resultDWord(
-        self,
-        name : str | bytes,
-        set : int = 1
-    ) -> int:
-
+    def resultDWord(self, name: str | bytes, set: int = 1) -> int:
         """Retrieves DWORD (unsigned short) data from an API job result.
         name must be specified. If no set number is passed, set #1 is accessed by default.
 
@@ -755,10 +653,10 @@ class EDIABAS():
 
         Optional parameters:
         set (int): Number of result set to be accessed.
-        
+
         Return values:
         result: value of the requested result.
-        
+
         Raises:
             JobFailedError
         """
@@ -771,10 +669,7 @@ class EDIABAS():
 
         # Get the result from the ECU
         job_status = api32.apiResultDWord(
-            self._handle,
-            ctypes.byref(result),
-            name,
-            ctypes.c_int(set)
+            self._handle, ctypes.byref(result), name, ctypes.c_int(set)
         )
 
         # Check if date has been received
@@ -784,13 +679,7 @@ class EDIABAS():
         # Return result as int
         return result.value
 
-
-    def resultInt(
-        self,
-        name : str | bytes,
-        set : int = 1
-    ) -> int:
-
+    def resultInt(self, name: str | bytes, set: int = 1) -> int:
         """Retrieves INTEGER (short) data from an API job result.
         name must be specified. If no set number is passed, set #1 is accessed by default.
 
@@ -799,10 +688,10 @@ class EDIABAS():
 
         Optional parameters:
         set: Number of result set to be accessed.
-        
+
         Return values:
         result: value of the requested result.
-        
+
         Raises:
             JobFailedError
         """
@@ -815,10 +704,7 @@ class EDIABAS():
 
         # Get the result from the ECU
         job_status = api32.apiResultInt(
-            self._handle,
-            ctypes.byref(result),
-            name,
-            ctypes.c_int(set)
+            self._handle, ctypes.byref(result), name, ctypes.c_int(set)
         )
 
         # Check if date has been received
@@ -828,13 +714,7 @@ class EDIABAS():
         # Return result as int
         return result.value
 
-
-    def resultLong(
-        self,
-        name : str | bytes,
-        set : int = 1
-    ) -> int:
-
+    def resultLong(self, name: str | bytes, set: int = 1) -> int:
         """Retrieves LONG (long) data from an API job result.
         name must be specified. If no set number is passed, set #1 is accessed by default.
 
@@ -843,10 +723,10 @@ class EDIABAS():
 
         Optional parameters:
         set: Number of result set to be accessed.
-        
+
         Return values:
         result: value of the requested result.
-        
+
         Raises:
             JobFailedError
         """
@@ -859,10 +739,7 @@ class EDIABAS():
 
         # Get the result from the ECU
         job_status = api32.apiResultLong(
-            self._handle,
-            ctypes.byref(result),
-            name,
-            ctypes.c_int(set)
+            self._handle, ctypes.byref(result), name, ctypes.c_int(set)
         )
 
         # Check if date has been received
@@ -872,13 +749,7 @@ class EDIABAS():
         # Return result as int
         return result.value
 
-
-    def resultReal(
-        self,
-        name : str | bytes,
-        set : int = 1
-    ) -> float:
-
+    def resultReal(self, name: str | bytes, set: int = 1) -> float:
         """Retrieves REAL (double) data from an API job result.
         name must be specified. If no set number is passed, set #1 is accessed by default.
 
@@ -887,10 +758,10 @@ class EDIABAS():
 
         Optional parameters:
         set (int): Number of result set to be accessed.
-        
+
         Return values:
         result: value of the requested result.
-        
+
         Raises:
             JobFailedError
         """
@@ -903,10 +774,7 @@ class EDIABAS():
 
         # Get the result from the ECU
         job_status = api32.apiResultReal(
-            self._handle,
-            ctypes.byref(result),
-            name,
-            ctypes.c_int(set)
+            self._handle, ctypes.byref(result), name, ctypes.c_int(set)
         )
 
         # Check if date has been received
@@ -916,14 +784,9 @@ class EDIABAS():
         # Return result as float
         return result.value
 
-
     def resultText(
-        self,
-        name : str | bytes,
-        set : int = 1,
-        format : str | bytes = b""
+        self, name: str | bytes, set: int = 1, format: str | bytes = b""
     ) -> str | bytes:
-
         """Retrieves TEXT (char) data from an API job result.
         name must be specified. If no set number is passed, set #1 is accessed by default.
 
@@ -936,11 +799,11 @@ class EDIABAS():
 
             min length:
                 Sets the minimum field length. Will be filled with spaces if needed.
-            
+
             "."decimal places: (must be started with a "." to be distinguished from "min length").
                 Sets the number of decimal places in case of a REAL (double).
                 Sets the maximum field length in case of TEXT (str).
-            
+
             exponent:
                 if omitted: REAL (double) will be printed as regular floating point number.
                 "E": Specified that REAL (double) will be printed as exponential expression like 2.33E3.
@@ -962,10 +825,10 @@ class EDIABAS():
         Optional parameters:
         set: Number of result set to be accessed.
         format: Format for type conversion to text.
-        
+
         Return values:
         result: value of the requested result. Will be converted to str if possible, else will ge returned as bytes.
-        
+
         Raises:
             JobFailedError
         """
@@ -979,11 +842,7 @@ class EDIABAS():
 
         # Get the result from the ECU
         job_status = api32.apiResultText(
-            self._handle,
-            ctypes.byref(result),
-            name,
-            ctypes.c_int(set),
-            format
+            self._handle, ctypes.byref(result), name, ctypes.c_int(set), format
         )
 
         # Check if date has been received
@@ -996,13 +855,7 @@ class EDIABAS():
         except UnicodeDecodeError:
             return result.value
 
-
-    def resultWord(
-        self,
-        name : str | bytes,
-        set : int = 1
-    ) -> int:
-
+    def resultWord(self, name: str | bytes, set: int = 1) -> int:
         """Retrieves WORD (unsigned short) data from an API job result.
         name must be specified. If no set number is passed, set #1 is accessed by default.
 
@@ -1011,10 +864,10 @@ class EDIABAS():
 
         Optional parameters:
         set: Number of result set to be accessed.
-        
+
         Return values:
         result: value of the requested result.
-        
+
         Raises:
             JobFailedError
         """
@@ -1027,10 +880,7 @@ class EDIABAS():
 
         # Get the result from the ECU
         job_status = api32.apiResultWord(
-            self._handle,
-            ctypes.byref(result),
-            name,
-            ctypes.c_int(set)
+            self._handle, ctypes.byref(result), name, ctypes.c_int(set)
         )
 
         # Check if date has been received
@@ -1040,9 +890,7 @@ class EDIABAS():
         # Return result as int
         return result.value
 
-
     def resultVar(self) -> str:
-
         """Extract the variant of the ECU from the result data.
 
         Return value:
@@ -1054,12 +902,9 @@ class EDIABAS():
 
         # Initialize variable to store the answer
         result = ctypes.create_string_buffer(statics.API_MAX_RESULT)
-        
+
         # Get the result from the ECU
-        job_status = api32.apiResultVar(
-            self._handle,
-            result
-        )
+        job_status = api32.apiResultVar(self._handle, result)
 
         # Check if date has been received
         if not job_status:
@@ -1068,12 +913,10 @@ class EDIABAS():
         # Return result as str
         return result.value.decode("UTF-8")
 
-
     def resultSets(self) -> int:
-
         """Retrieves the number of result sets in the current result.
         Set #0 (containing ECU and result data) is not counted. So only sets containing results are counted.
-        
+
         Return values:
         result: Number of result sets in the current result (not including Set #0).
 
@@ -1085,10 +928,7 @@ class EDIABAS():
         result = ctypes.c_ushort()
 
         # Get the result from the ECU
-        job_status = api32.apiResultSets(
-            self._handle,
-            ctypes.byref(result)
-        )
+        job_status = api32.apiResultSets(self._handle, ctypes.byref(result))
 
         # Check if date has been received
         if not job_status:
@@ -1097,15 +937,10 @@ class EDIABAS():
         # Return result as int
         return result.value
 
-
-    def resultNumber(
-        self,
-        set : int = 1
-    ) -> int:
-
+    def resultNumber(self, set: int = 1) -> int:
         """Retrieves the number of results in the given set.
         If no set is specified, the first result set (#1) is used.
-        
+
         Optional Parameters:
         set: Set to be checked for number of results.
 
@@ -1120,11 +955,7 @@ class EDIABAS():
         result = ctypes.c_ushort()
 
         # Get the result from the ECU
-        job_status = api32.apiResultNumber(
-            self._handle,
-            ctypes.byref(result),
-            set
-        )
+        job_status = api32.apiResultNumber(self._handle, ctypes.byref(result), set)
 
         # Check if date has been received
         if not job_status:
@@ -1133,13 +964,7 @@ class EDIABAS():
         # Return result as int
         return result.value
 
-
-    def resultName(
-        self,
-        position : int = 1,
-        set : int = 1
-    ) -> str:
-
+    def resultName(self, position: int = 1, set: int = 1) -> str:
         """Retrieves the name of a given result in a given set and position.
         Sets are indexed from 0, but set #0 holds only basic data about job and ECU and no results.
         Positions are indexed from 1, so the first result in a set is at position 1 NOT at position 0!
@@ -1152,7 +977,7 @@ class EDIABAS():
 
         Return values:
         result: Name of result at given position in the given set.
-        
+
         Raises:
             JobFailedError
         """
@@ -1162,10 +987,7 @@ class EDIABAS():
 
         # Get the result from the ECU
         job_status = api32.apiResultName(
-            self._handle,
-            ctypes.byref(result),
-            position,
-            set
+            self._handle, ctypes.byref(result), position, set
         )
 
         # Check if date has been received
@@ -1175,13 +997,9 @@ class EDIABAS():
         # Return result as bytes
         return result.value.decode("UTF-8")
 
-
     def resultFormat(
-        self,
-        name : str | bytes,
-        set : int = 1
+        self, name: str | bytes, set: int = 1
     ) -> statics.API_RESULT_FORMAT:
-
         """Retrieves the format of a given result in a given set as API_RESULT_FORMAT.
         Sets are indexed from 0, but set 0 holds only basic data about job and ECU and no results.
         If no set is specified, the first result set (#1) is used.
@@ -1194,7 +1012,7 @@ class EDIABAS():
 
         Return values:
         result: Format of the result in the given set as API_RESULT_FORMAT.
-        
+
         Raises:
             JobFailedError
         """
@@ -1207,10 +1025,7 @@ class EDIABAS():
 
         # Get the result from the ECU
         job_status = api32.apiResultFormat(
-            self._handle,
-            ctypes.byref(result),
-            name,
-            set
+            self._handle, ctypes.byref(result), name, set
         )
 
         # Check if date has been received
@@ -1220,9 +1035,7 @@ class EDIABAS():
         # Return result as API_RESULT_FORMAT
         return statics.API_RESULT_FORMAT(result.value)
 
-
     def resultsNew(self) -> int:
-
         """Saves a copy of the result field of the current job. Completion of a running job is waited for.
         The returned value is the address to the saved result field and can be used by resultsScope and resultsDelete.
 
@@ -1236,48 +1049,31 @@ class EDIABAS():
         # Return data
         return result_address
 
-
-    def resultsScope(
-        self,
-        address : int
-    ) -> None:
-
+    def resultsScope(self, address: int) -> None:
         """Sets the address of the saved result data to be used.
         The result functions will use this data until changed again by resultsScope or a new job has been started.
-        
+
         Parameters:
         address: Address of the saved result to be used.
         """
 
         # Set address
-        api32.apiResultsScope(
-            self._handle,
-            address
-        )
+        api32.apiResultsScope(self._handle, address)
 
-
-    def resultsDelete(
-        self,
-        address : int
-    ) -> None:
-
+    def resultsDelete(self, address: int) -> None:
         """Deletes the saved results at the given address and free the used memory.
-        
+
         Parameters:
         address: Address of the saved result to be deleted.
         """
 
         # Free memory
-        api32.apiResultsDelete(
-            self._handle,
-            address
-        )
-    
+        api32.apiResultsDelete(self._handle, address)
+
     @staticmethod
     def _process_text_argument(arg: str | bytes) -> bytes:
-
         """Used to make sure text arguments are converted to bytes before being passed to an EDIABAS API function.
-        
+
         Parameters:
         arg: Text argument to be converted if necessary.
 
@@ -1295,17 +1091,17 @@ class EDIABAS():
                 return arg.encode("UTF-8")
             except UnicodeEncodeError as e:
                 raise ValueError("Unable to encode 'str' arguments to 'bytes'") from e
-            
+
         # Return the unchanged bytes value
         if isinstance(arg, bytes):
             return arg
-        
-        # Raise a TypeError for any other type of argument
-        raise TypeError(f"Got {type(arg)} type argument where 'str' or 'bytes' is required")
-    
-    def __eq__(self, ediabas_to_check):
 
-        """Is True if both EDIABAS object using the same instance of the EDIABAS API.
-        """
+        # Raise a TypeError for any other type of argument
+        raise TypeError(
+            f"Got {type(arg)} type argument where 'str' or 'bytes' is required"
+        )
+
+    def __eq__(self, ediabas_to_check):
+        """Is True if both EDIABAS object using the same instance of the EDIABAS API."""
 
         return self._handle.value == ediabas_to_check._handle.value

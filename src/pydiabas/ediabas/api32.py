@@ -11,19 +11,19 @@ _api32 = ctypes.WinDLL(find_library("api32"))
 
 
 # Extract functions from DLL
-enableServer = _api32.enableServer # Not implemented in api.py
-closeServer = _api32.closeServer # Not implemented in api.py
-enableMultiThreading = _api32.enableMultiThreading # Not implemented in api.py
+enableServer = _api32.enableServer  # Not implemented in api.py
+closeServer = _api32.closeServer  # Not implemented in api.py
+enableMultiThreading = _api32.enableMultiThreading  # Not implemented in api.py
 
 apiInit = _api32.__apiInit
-apiInitExt = _api32.__apiInitExt # Not implemented in api.py
+apiInitExt = _api32.__apiInitExt  # Not implemented in api.py
 apiBreak = _api32.__apiBreak
 apiEnd = _api32.__apiEnd
 
-apiSwitchDevice = _api32.__apiSwitchDevice # Not implemented in api.py
+apiSwitchDevice = _api32.__apiSwitchDevice  # Not implemented in api.py
 
 apiState = _api32.__apiState
-apiStateExt = _api32.__apiStateExt # Not implemented in api.py
+apiStateExt = _api32.__apiStateExt  # Not implemented in api.py
 
 apiTrace = _api32.__apiTrace
 
@@ -36,7 +36,7 @@ apiErrorText = _api32.__apiErrorText
 
 apiJob = _api32.__apiJob
 apiJobData = _api32.__apiJobData
-apiJobExt = _api32.__apiJobExt 
+apiJobExt = _api32.__apiJobExt
 apiJobInfo = _api32.__apiJobInfo
 
 apiResultSets = _api32.__apiResultSets

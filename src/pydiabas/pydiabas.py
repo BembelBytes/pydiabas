@@ -8,15 +8,13 @@ from .result import Result
 from .exceptions import StateError, ConfigError
 
 
-class PyDIABAS():
-
-    """Class for simplified interaction with the EDIABAS API.
-    """
+class PyDIABAS:
+    """Class for simplified interaction with the EDIABAS API."""
 
     def __init__(self) -> PyDIABAS:
         self._ediabas = ediabas.EDIABAS()
         self._config = {}
-    
+
     def __enter__(self) -> PyDIABAS:
         # Initialize EDIABAS API session
         self.start()
@@ -30,36 +28,36 @@ class PyDIABAS():
     @property
     def ready(self) -> bool:
         return self._ediabas.state() == ediabas.API_STATE.READY
-    
+
     @property
     def ediabas(self) -> ediabas.EDIABAS:
         return self._ediabas
-    
-    def start(self) -> None:
 
+    def start(self) -> None:
         """Initialize a new EDIABAS API session and set the configuration according the the current
         configuration settings.
 
         Raises:
             StateError
         """
-        
+
         # Start EDIABAS API session and set config according to current configuration setting
-        self._ediabas.initExt(configuration=";".join(f"{name}={value}" for name, value in self._config.items()))
+        self._ediabas.initExt(
+            configuration=";".join(
+                f"{name}={value}" for name, value in self._config.items()
+            )
+        )
 
         # Check if EDIABAS API started successfully
         if self._ediabas.state() == ediabas.API_STATE.ERROR:
             raise StateError(self._ediabas.errorText())
 
     def end(self):
-
-        """Ends EDIABAS API session and frees used memory.
-        """
+        """Ends EDIABAS API session and frees used memory."""
 
         self._ediabas.end()
-    
-    def reset(self):
 
+    def reset(self):
         """Resets the EDIABAS API session be stopping and starting it again.
         Configuration will be set according to configuration settings after restart.
         """
@@ -69,7 +67,6 @@ class PyDIABAS():
         self.start()
 
     def config(self, **kwargs) -> dict:
-
         """Sets the EDIABAS API configuration and returns the resulting configuration.
         If no parameters are given, no changes are made an the current configuration is returned.
         For each configuration setting a named parameter can be used like:
@@ -84,7 +81,7 @@ class PyDIABAS():
         **kwargs: Configurations to be changed.
 
         Return values:
-        return: Configurations after the changes (if any) have been made. 
+        return: Configurations after the changes (if any) have been made.
         """
 
         # Clean up path strings
@@ -97,7 +94,9 @@ class PyDIABAS():
             try:
                 self._ediabas.getConfig(keyword)
             except ediabas.JobFailedError:
-                raise KeyError(f"Invalid config parameter '{keyword}'. Did you call start() already?")
+                raise KeyError(
+                    f"Invalid config parameter '{keyword}'. Did you call start() already?"
+                )
 
         # Set new config in ediabas
         for keyword in kwargs:
@@ -106,20 +105,30 @@ class PyDIABAS():
                 # Merge added config to current config
                 self._config = self._config | {keyword.lower(): kwargs[keyword]}
             except ediabas.JobFailedError:
-                raise ConfigError(f"Unable to change config of '{keyword}' to '{kwargs[keyword]}'. Please check current config")
+                raise ConfigError(
+                    f"Unable to change config of '{keyword}' to '{kwargs[keyword]}'. Please check current config"
+                )
 
         # Check if all values are correctly set
         for keyword in self._config:
             try:
                 assert str(self._config[keyword]) == self._ediabas.getConfig(keyword)
             except (ediabas.JobFailedError, AssertionError):
-                raise ConfigError(f"Failed to set '{keyword}' correctly. Please check current config")
-        
+                raise ConfigError(
+                    f"Failed to set '{keyword}' correctly. Please check current config"
+                )
+
         # Return current config from EDIABAS
         return self._config
-        
-    def job(self, ecu: str, job: str | bytes, parameters: str | bytes | list[str] | list[bytes] = "", result_filter: str | list[str] = "", fetchall: bool=True) -> Result:
 
+    def job(
+        self,
+        ecu: str,
+        job: str | bytes,
+        parameters: str | bytes | list[str] | list[bytes] = "",
+        result_filter: str | list[str] = "",
+        fetchall: bool = True,
+    ) -> Result:
         """Execute a job via the EDIABAS API and get back the result as a pydiabas.Result object.
         This function waits for the job to be finished and the result to be fetched completely if not deactivated.
         Job parameters can be handed either as str, list of str's, bytes or list of bytes but must be
@@ -138,7 +147,7 @@ class PyDIABAS():
         result_filter: Results to be asked for. May not work with all ECUs.
         fetchall: If set to False it avoids fetching the complete result. Fetching must be done manually trough the
                   methods coming with the Result object.
-        
+
         Return values:
         return: Result object with all values fetched (if not deactivated).
 
@@ -149,46 +158,47 @@ class PyDIABAS():
 
         # Separate multiple parameters using a semicolon
         if isinstance(parameters, list):
-            
+
             # Verify all items in list are same type
             for parameter in parameters:
                 if not isinstance(parameter, type(parameters[0])):
-                    raise TypeError("All values in the list of parameters must be of the same type")
-            
+                    raise TypeError(
+                        "All values in the list of parameters must be of the same type"
+                    )
+
             # Check if list contains str or bytes
             if isinstance(parameters[0], str):
                 parameters = ";".join(parameters)
-            
+
             # Verify all items in list are same type
             elif isinstance(parameters[0], bytes):
                 parameters = b";".join(parameters)
-        
+
         elif not isinstance(parameters, (str, bytes)):
             raise TypeError("parameters expects str, bytes or list.")
-        
+
         # Separate multiple results filters using a semicolon
         if isinstance(result_filter, list):
-            
+
             # Verify all items in list are same type
             for result in result_filter:
                 if not isinstance(result, str):
                     raise TypeError("All values in the list of results must be str")
-            
+
             # Check if list contains str or bytes
             if isinstance(result_filter[0], str):
                 result_filter = ";".join(result_filter)
-        
+
         elif not isinstance(result_filter, str):
             raise TypeError("result_filter expects str, bytes or list.")
 
-
         # Execute job
         self._ediabas.job(ecu, job, parameters, result_filter)
-        
+
         # Wait for job to finish
         while self._ediabas.state() == ediabas.API_STATE.BUSY:
             pass
-        
+
         # Check for errors
         if self._ediabas.state() == ediabas.API_STATE.ERROR:
             raise StateError(self._ediabas.errorText())
@@ -196,5 +206,5 @@ class PyDIABAS():
         # Fetch result if requested
         if fetchall:
             return Result(self._ediabas).fetchall()
-        
+
         return Result(self._ediabas)
