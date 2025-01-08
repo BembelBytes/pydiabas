@@ -22,6 +22,10 @@ Using this module makes it possible to make advantage of the comfort features of
     - [ecu module](#ecu-module)
         - [ECU class](#ecu-class)
         - [MSD80 class](#msd80-class)
+    - [simulation module](#simulation-module)
+        - [SimulatedPyDIABAS class](#simulatedpydiabas-class)
+        - [CapturedJob class](#capturedjob-class)
+        - [capture_jobs decorator](#capture_jobs-decorator)
 6. [Tests](#6-tests)
 7. [Limitations](#7-limitations)
 8. [Future Development](#8-future-development)
@@ -61,7 +65,7 @@ I'm using the [MaxDia Diag 2+](https://www.obdexpert.de/shopware/diagnose-artike
 > I don't get payed by obdexpert.de, its just as personal recommendation based on my experience. There may be lots of other cables out there which will be as good or even better as my suggestion, but I've never used them.
 
 ### Python Version and dependencies
-This module has been developed using [python 3.12.7 32bit](https://www.python.org/downloads/release/python-3127/) and tested on [python 3.13.1 32bit](https://www.python.org/downloads/release/python-3131/).
+This module has been developed using [python 3.12.7 32bit](https://www.python.org/downloads/release/python-3127/) and tested on [python 3.13.1 32bit](https://www.python.org/downloads/release/python-3131/). The minimum required version is [python 3.10.0 32bit](https://www.python.org/downloads/release/python-3100/).
 As **EDIABAS** uses 32bits memory addresses, a 32bit python version is necessary to load the **EDIABAS** dynamic library ("api32.dll").
 
 
@@ -76,7 +80,7 @@ pip install pydiabas
 To get your first data out of **pydiabas** you just need a few lines of code.
 It's not necessary to have your OBD cable connected to your PC as `TMODE` is a simulated ECU which can be accessed without being connected to a car.
 
-```python
+```py
 # Make sure to use a 32bit python version!
 
 # Import the PyDIABAS class from the pydiabas module
@@ -110,7 +114,7 @@ After finishing communications the *end()* method must be called to stop the con
 Forgetting to call *end()* usually doesn't cause any major problems, even for possible succeeding **EDIABAS** sessions on the same machine but it should always be done as a good habit.
 During any time the present state of **EDIABAS** can be checked using the property *ready*. It returns *True* if **EDIABAS** is ready or *False* if not. Getting *False* as return value does not necessary mean that **EDIABAS** is not able to execute a Job. *False* may be returned if *start()* has not been called or failed, or if the previous job failed for any reason. In the last case a succeeding job may run successful.
 
-```python
+```py
 # Starting and ending an EDIABAS session manually
 from pydiabas import PyDIABAS
 
@@ -126,7 +130,7 @@ pydiabas.start()
 # End the session
 pydiabas.end()
 ```
-```python
+```py
 # Starting and ending an EDIABAS session automatically using pythons context manager
 from pydiabas import PyDIABAS
 
@@ -134,7 +138,7 @@ with PyDIABAS() as pydiabas:
     # All the work will be done here
     # The session will be started and ended automatically even if exception occur
 ```
-```python
+```py
 # Using ready property
 from pydiabas import PyDIABAS
 
@@ -158,7 +162,7 @@ Any changes done via an *PyDIABAS* object will be stored inside the object and w
 Accessing this dict without changing the configuration can be done by calling *config()* without passing any parameters.
 A complete list of configuration parameters can be found in the documentation (usually placed in the `/Doku` folder) of your **EDIABAS** installation or in the docstring of the **EDIABAS** class.
 
-```python
+```py
 # Setting and reading configuration changes
 from pydiabas import PyDIABAS
 
@@ -177,7 +181,7 @@ If the size of the data returned by the ECU is expected to be very large and onl
 Calling the *job()* method will block the program until the results have been returned from the ECU and returns these as a *Result* object.
 If the job fails, a *StateError* will be raised.
 
-```python
+```py
 # Executing a job
 from pydiabas import PyDIABAS
 
@@ -191,7 +195,7 @@ with PyDIABAS() as pydiabas:
 ##### Direct access to the *EDIABAS* instance
 To enable direct access to the *EDIABAS* object, the property *ediabas* can be used. This might become necessary to perform very specific jobs or to get detailed information about the current state or error codes and description of the **EDIABAS** system.
 
-```python
+```py
 # Direct access to the EDIABAS object
 from pydiabas import PyDIABAS
 
@@ -302,7 +306,7 @@ Represents the result coming back from the ECU after a job has been executed.
 An instance of this class will be returned by the method *job()* after the job has been executed by the ECU.
 The class can be used to manually create *Result* objects. Data can be loaded into these object by fetching them, using on of the various fetch methods.
 
-```python
+```py
 # Getting Result object from a job
 from pydiabas import PyDIABAS
 
@@ -312,7 +316,7 @@ with PyDIABAS() as pydiabas:
     result = pydiabas.job(ecu="TMODE", job="INFO")
 ```
 
-```python
+```py
 # Manually creating a Result object
 from pydiabas import Result
 
@@ -353,7 +357,7 @@ Result
 ##### Fetching Data from **EDIABAS**
 If the *Result* object has been returned by a **pydiabas** job, data will automatically be fetched and no further action is required before accessing it through the *Result* object.
 
-```python
+```py
 # Automatically fetch all data together with executing the job
 from pydiabas import PyDIABAS
 
@@ -366,7 +370,7 @@ with PyDIABAS() as pydiabas:
 Data can be manually fetched if necessary using one of he following methods.
 This can be useful if a job is expected to return a lot of data and only a small part of this data is of interest. Inhibiting fetching of all of the data will reduce execution time.
 Manual fetching methods will modify the *Result* object in place as well as returning the modified object to use this functions in both of the following ways:
-```python
+```py
 # Manually fetching in the same line together with the job execution
 from pydiabas import PyDIABAS
 
@@ -377,7 +381,7 @@ with PyDIABAS() as pydiabas:
     result = pydiabas.job(ecu="TMODE", job="INFO", fetchall=False).fetchsystemset()
 ```
 
-```python
+```py
 # Manually fetching after the Result object has been created modifying the object in place
 from pydiabas import PyDIABAS
 
@@ -406,7 +410,7 @@ result:
 
 <br>
 
-```python
+```py
 # Using python standart functionality with a Result object
 
 # Get number of jobSets
@@ -621,7 +625,7 @@ for job_set in result:
 
 > **get_in(pattern, [default=None])** -> *int* | *str* | *bytes* | *float* | *None*
 >
-> Gets the value of the first *Row* partially matching the given name starting from the first *jobSet* to the last.
+> Gets the value of the first *Row* having the pattern in its name from the first *jobSet* to the last.
 > Any further occurrences of the name in other *jobSets* will be ignored.
 > A default value can be set to be returned in case no matching *Row* can be found instead of returning *None*.
 >
@@ -670,7 +674,7 @@ for job_set in result:
 Is part of a *Result's* data structure and represents a set of data coming back from the **EDIABAS** job.  
 A *Set* contains *Row* objects for each row in the respective set of the **EDIABAS** data.
 
-```python
+```py
 # Get a Set from a Result object
 from pydiabas import PyDIABAS
 
@@ -693,7 +697,7 @@ system_set:
 
 <br>
 
-```python
+```py
 # Using python standart functionality with a Set
 
 # Get number of Rows
@@ -820,7 +824,7 @@ for row in system_set:
 
 > **get_in(pattern, [default=None])** -> *int* | *str* | *bytes* | *float* | *None*
 >
-> Gets the value of the first *Row* matching the given pattern starting from the first *Row* to the last.
+> Gets the value of the first *Row* having the pattern in its name from the first *Row* to the last.
 > A default value can be set to be returned in case no matching *Row* can be found instead of returning *None*.
 >
 > Parameter **pattern** must be a *str*.  
@@ -876,11 +880,65 @@ If we have a row with name="SAETZE" and value=25 we can use the Row object as fo
 ```
 
 
+### ediabas module
+This module is used by **pydiabas** behind the scenes. Most of the functionality is being a wrapper around the **EDIABAS** API to provide a pythonic way of accessing it.
+
+As using this module is not necessary for most of the users, a detailed documentation is not provided at this place. Class and methods are documented in the respective source code file.
+
+A detailed description about handling the **EDIABAS** API can be found in the `/Doku` folder of your **EDIABAS** installation. 
+
+The *EDIABAS* class provides methods with the same names and effects as the functions available in the **EDIABAS** API with some general differences.
+As the **EDIABAS** API uses the 'C-style' of function signatures by providing a reference to a variable in which the return value of the job should be stored and returning the status of the job as return value of the function like:
+```C
+// C-style function signature used in EDIABAS
+
+int value;
+
+// Value will be set to the referenced variable trough side-effect of the function
+// Return value of the function gives information about the job status
+bool job_sts = arbitrary_ediabas_function(&value);
+```
+This is translated in to the 'python-style' of function signatures as follows:
+```py
+# Python-style function signature used in ediabas
+
+try:
+    # Return value of the function is the values asked for
+    value = arbitrary_ediabas_function()
+except JobFailedError:
+    # A JobFailedError exception is raised if the job fails
+```
+Besides these changes, the **ediabas** module works the same as the **EDIABAS** API.
+A details description of **EDIABAS** can be found in the `/Doku` folder of your **EDIABAS** installation. Details about the **ediabas** module can be found in the source code file itself.
+
+#### EDIABAS class
+Class representing the **EDIABAS** API. Can be used in very much the same way as the **EDIABAS** API itself.
+
+#### statics
+Contains all static constants used by this **ediabas** module
+
+#### utils
+Provides helper functions for a more comfortable and clean way of interaction with the **ediabas** module.
+
+> **getResult(ediabas, name, [set=1])** -> *str* | *bytes* | *int* | *float* | *None*
+> 
+> Accesses the **EDIABAS** result and searches the given result set (defaults to 1, as this is the first set containing data returned by the job) data with the given name.  
+> Checks the format of the data, gets the data and casts it to the most appropriate python data type. If no data with the name is found, *None* will be returned.
+>
+> Parameter **ediabas** must be an *EDIABAS* instance.  
+> Parameter **name** must be a *str*.  
+> Optional parameter **set** must be an *int*.  
+> **Returns** the value of the data or *None*.
+
+#### api32
+Is just a wrapper around the `api32.dll` library, loading this library and extracting all the functions.
+
+
 ### ecu module
 This module facilitates the execution of tasks that are frequently used when working with ECUs. There are some generic functions that can be used on all ECUs in this class and functions more specific to a single ECU which can be found in the respective class. For now, only specific tasks for MSD80 are implemented.  
 A *PyDIABAS* instance need to be set up separately to provide connection to the ECU via **EDIABAS**.
 
-```python
+```py
 # Get available jobs by using the ECU class
 from pydiabas import PyDIABAS
 from pydiabas.ecu import ECU
@@ -905,7 +963,7 @@ Offers generic functions that can be used on all ECUs.
 
 ##### Initialization
 To be able to use the *ECU* object, the name of the ECU to communicate with must be set first. This can either be done by passing the name as argument when creating the object or it can be set (or even changed) later via the *name* instance variable.
-```python
+```py
 # Setting the name of the ECU
 from pydiabas.ecu import ECU
 
@@ -916,8 +974,40 @@ tmode = ECU("TMODE")
 frm = ECU()
 frm.name = "FRM"
 ```
+```py
+# Executing a job in an ECU
+from pydiabas import PyDIABAS
+from pydiabas.ecu import ECU
+
+# Create an ECU object
+tmode = ECU("TMODE")
+
+# Start a PyDIABAS session
+with PyDIABAS() as pydiabas:
+
+    # Jobs can be executed using the ECU object in the same way as using the PyDIABAS instance by just changing the ecu parameter with the pydiabas parameter.
+    tmode.job(pydiabas, "LESE_INTERFACE_TYP")
+```
 
 ##### Functions
+> **job(_pydiabas_, job [parameters="", result_filter="", fetchall=*True*])** -> Result
+>
+> This method actually executes communication with the ECU. 
+>
+>This method is just a utility to be able to execute jobs directly on the ECU object instead of using a PyDIABAS object to do so. It just calls the *job()* method of the given PyDIABAS instance with the parameter **ecu** set to the name ob this ECU object.  
+> Consult the documentation of the *PyDIABAS.job()* method for further details.
+>
+> Parameter **pydiabas** must be a *PyDIABAS* object.  
+> Parameter **job** must be a *str*.  
+> Optional parameter **parameters** must be *str*, *bytes* or *list*.  
+> Optional parameter **result_filter** must be *str* or *list*.  
+> Optional parameter **fetchall** must be a *bool*.  
+> **Returns** the *Result* object.
+> ```
+> >>> ecu.job(pydiabas, "LESE_INTERFACE_TYP")
+> <pydiabas.result.Result object at 0x.....>
+> ```
+
 > **get_jobs(_pydiabas_, [details=*True*, verbose=*False*])** -> *dict*[*dict*]
 >
 > Gets the names of all available jobs in the ECU and adds them as keys to a *dict* with an empty *dict* set as the value. If details is set to *True* these empty *dicts* will be filled with additional information about the job if available in the ECU.  
@@ -1069,7 +1159,7 @@ If more that one reading needing a conversion is required the slower *read()* me
 
 ##### Initialization
 As the name does not need to be set manually, no parameters musst be passed or set manually.
-```python
+```py
 # Creating an MSD80 object
 from pydiabas.ecu import MSD80
 
@@ -1154,58 +1244,421 @@ msd80 = MSD80()
 > <pydiabas.result.Result object at 0x.....>
 > ```
 
-### ediabas module
-This module is used by **pydiabas** behind the scenes. Most of the functionality is being a wrapper around the **EDIABAS** API to provide a pythonic way of accessing it.
 
-As using this module is not necessary for most of the users, a detailed documentation is not provided at this place. Class and methods are documented in the respective source code file.
+### simulation module
+This module provides features to simulate job execution. Its designed to be used for development purpose only, where the *SimulatedPyDIABAS* class can be used to provide job data without necessarily being connected to a car.  
+In addition there is the *CapturedJob* class to create objects containing data of previously executed jobs that will be used for the simulation and the *capture_jobs()* decorator, wich makes it possible to capture job data from executed jobs.
 
-A detailed description about handling the **EDIABAS** API can be found in the `/Doku` folder of your **EDIABAS** installation. 
 
-The *EDIABAS* class provides methods with the same names and effects as the functions available in the **EDIABAS** API with some general differences.
-As the **EDIABAS** API uses the 'C-style' of function signatures by providing a reference to a variable in which the return value of the job should be stored and returning the status of the job as return value of the function like:
-```C
-// C-style function signature used in EDIABAS
+```py
+# Capturing a job and saving it as *.jobs file
+from pydiabas import PyDIABAS
+from pydiabas.simulation import capture_job, save_jobs_to_file
 
-int value;
+# Use a normal PyDIABAS instance to capture a job
+with PyDIABAS() as pydiabas:
 
-// Value will be set to the referenced variable trough side-effect of the function
-// Return value of the function gives information about the job status
-bool job_sts = arbitrary_ediabas_function(&value);
+    # Captured jobs will be stored in this list
+    jobs = []
+
+    # Apply the decorator to the job method
+    # The second argument (jobs) is the list where the jobs will be stored in
+    pydiabas.job = capture_job(pydiabas.job, jobs)
+
+    # Execute and capture a job
+    pydiabas.job("TMODE", "INFO")
+
+    # Save captured jobs to a file in the CWD
+    save_jobs_to_file(jobs)
+
+# A *.jobs file will be created in the current working directory each time you run this script
 ```
-This is translated in to the 'python-style' of function signatures as follows:
-```python
-# Python-style function signature used in ediabas
+```py
+# Use a SimulatedPyDIABAS instance to simulate the captured job
+from pydiabas.simulation import SimulatedPyDIABAS
 
-try:
-    # Return value of the function is the values asked for
-    value = arbitrary_ediabas_function()
-except JobFailedError:
-    # A JobFailedError exception is raised if the job fails
+# The previously saved *.jobs file will automatically be loaded from current working directory
+with SimulatedPyDIABAS() as simulated_pydiabas:
+
+    # Load the jobs to simulate. *.jobs files from the CWD will be loaded
+    simulated_pydiabas.load_jobs()
+
+    # Simulate a job
+    simulated_result = simulated_pydiabas.job("TMODE", "INFO")
+
+print(simulated_result)
+"""
+============== PyDIABAS Result ==============
+-------------- systemSet       --------------
+__SIMULATED__                 : YES
+OBJECT                        : tmode
+SAETZE                        : 1
+JOBNAME                       : INFO
+VARIANTE                      : TMODE
+JOBSTATUS                     :
+...
+-------------- jobSet #0       --------------
+ECU                           : TMODE
+...
+============== END             ==============
+"""
 ```
-Besides these changes, the **ediabas** module works the same as the **EDIABAS** API.
-A details description of **EDIABAS** can be found in the `/Doku` folder of your **EDIABAS** installation. Details about the **ediabas** module can be found in the source code file itself.
 
-#### EDIABAS class
-Class representing the **EDIABAS** API. Can be used in very much the same way as the **EDIABAS** API itself.
+#### SimulatedPyDIABAS class
+This class is derived from the *PyDIABAS* class with a modified *job()* method and some additional features to provide simulated job results.
 
-#### statics
-Contains all static constants used by this **ediabas** module
+##### Limitations
+> __Warning:__ The *EDIABAS* instance associated with the *PyDIABAS* object is not simulated!
 
-#### utils
-Provides helper functions for a more comfortable and clean way of interaction with the **ediabas** module.
+##### Initialization
+There are multiple ways to provide the *SimulatedPyDIABAS* instance with simulation data.
+- Loading job data from `*.jobs` files by specifying the path to be used (dir or file).
+- Adding captured jobs.
 
-> **getResult(ediabas, name, [set=1])** -> *str* | *bytes* | *int* | *float* | *None*
+```py
+# Adding jobs as list or tuple ob CapturedJob objects or one single CapturesJob object
+from pydiabas.simulation import SimulatedPyDIABAS
+
+# This line is just for demonstration to keep this example script short
+jobs = CapturedJob(... )
+
+with SimulatedPyDIABAS(captured_jobs=jobs) as simulated_pydiabas:
+    pass
+```
+```py
+# Load *.jobs files
+from pydiabas.simulation import SimulatedPyDIABAS
+
+# Create an instance without reading any *.jobs files
+with SimulatedPyDIABAS() as simulated_pydiabas:
+    
+    # Load all *.jobs files from the given directory, CWD by default
+    simulated_pydiabas.load_jobfiles()
+```
+
+##### Simulating jobs
+To be able to simulate jobs, the *SimulatedPyDIABAS* object needs data about the jobs to be simulated.
+This can either be done by capturing data from executed jobs and make it available for the simulation or by implementing a dedicated function that takes the arguments passed to the *job()* method as keyword arguments and returns a *Result* object or *None* if the not being able to simulate the called job. 
+
+###### Captured jobs
+The data of captured jobs comprises the arguments used to execute the job and the resulting *Result* object, that came back from the executed job. This data will be encapsulated in a *CapturedJob* object.
+To do all this, the *capture_job* decorator will be used to capture this data while executing jobs using *PyDIABAS*
+```py
+# Capturing a job by using the decorator
+from pydiabas import PyDIABAS
+from pydiabas.simulation import SimulatedPyDIABAS, capture_job, save_jobs_to_file
+
+# Captured jobs will be stored in this list
+jobs = []
+
+# Use a normal PyDIABAS instance to capture a job
+pydiabas = PyDIABAS()
+
+# Apply the decorator to the job method
+# The second argument (jobs) is the list where the jobs will be stored in
+pydiabas.job = capture_job(pydiabas.job, jobs)
+
+# Jobs can be executed thereafter
+
+# to be continued ...
+```
+The *list* if *CapturedJob* objects can than be used to simulate jobs.
+This *list* or even single *CapturedJob* objects can be added to the *SimulatedPyDIABAS* object by using the *add_jobs()* method.
+```py
+# ... continuation
+
+# Create a simulation object
+simulated_pydiabas = SimulatedPyDIABAS()
+
+# Add a single job to the simulation
+simulated_pydiabas.add_jobs(jobs[0])
+
+# Add a list or tuple of jobs to the simulation
+simulated_pydiabas.add_jobs(jobs)
+
+# Simulation is now ready to be used by calling the job() method
+
+# to be continued ...
+```
+Job data can even be saved as a file for later use by using the *save_jobs_to_file()* function and be added py reading the file using the *load_jobs()* method thereafter.
+```py
+# ... continuation
+
+# Save jobs to file in the CWD and remember filename
+filename = save_jobs_to_file(jobs)
+
+# Load jobs from the created file
+simulated_pydiabas.load_jobs(filename)
+
+# to be continued ...
+```
+
+###### Dedicated job simulation function
+If the job can not be simulated by capturing it once and just reproduce the *Result* each time the job is called, a dedicated simulation function can be implemented. This might be necessary if the job depends on a internal state like a job that returns different data each time it is called.
+The function must accept the job arguments as keyword arguments and return a *Result* if able to simulate the job object or *None* if not.
+To ease the creation of the *Result* object a *base_result()* method is available to create a *Result* containing all basic values.
+To implement a dedicated function, the *custom_job()* method shall be overwritten.
+```py
+# ... continuation
+
+# Define a new simulation class inheriting from SimulatedPyDIABAS
+class DedicatedSimulation(SimulatedPyDIABAS):
+    
+    # Implementing a dedicated job simulation function by overwriting the custom_job method
+    def custom_job(self, **kwargs):
+
+        # Check if the correct ecu and job has been called
+        if kwargs["ecu"] == "SIM" and kwargs["job"] == "TEST":
+
+            # Get the base result
+            result = self.base_result(ecu="SIM", job="TEST")
+
+            # Add data to the jobSet of the result
+            result._jobSets = [
+                Set([
+                    Row("DATA", 100)
+                ])
+            ]
+
+            # Add additional data to the first jobSet
+            result._jobSets[0]._rows.append(
+                Row("STATUS", "ON")
+            )
+
+            # Return the result object
+            return result
+
+        # This code is not necessary but added for clarification
+        else:
+
+            # Return None if unable to simulate the job
+            return None
+
+# Try the simulation
+dedicated_simulation = DedicatedSimulation()
+dedicated_simulation.job("SIM", "TEST")
+``` 
+
+##### Functions and Properties
+> **SimulatedPyDIABAS()** - > None
 > 
-> Accesses the **EDIABAS** result and searches the given result set (defaults to 1, as this is the first set containing data returned by the job) data with the given name.  
-> Checks the format of the data, gets the data and casts it to the most appropriate python data type. If no data with the name is found, *None* will be returned.
->
-> Parameter **ediabas** must be an *EDIABAS* instance.  
-> Parameter **name** must be a *str*.  
-> Optional parameter **set** must be an *int*.  
-> **Returns** the value of the data or *None*.
+> Creates a new SimulatedPyDIABAS() instance loading any jobs.
+> ```
+> >>> simulated_pydiabas = SimulatedPyDIABAS()
+> ```
 
-#### api32
-Is just a wrapper around the `api32.dll` library, loading this library and extracting all the functions.
+> **start()** - > None
+>
+> Clears all jobs that might have been loaded previously. 
+> ```
+> >>> simulated_pydiabas.start()
+> ```
+
+> **end()** -> None
+>
+> Does nothing in this simulation
+> ```
+> >>> simulated_pydiabas.end()
+> ```
+
+> **reset()** -> None
+>
+> Has the same effect as calling *end()* and *start()* consecutive.
+> ```
+> >>> simulated_pydiabas.reset()
+> ```
+
+> **ready** -> *bool*
+>
+> **Returns** *True* if jobs are available for simulation.
+> ```
+> >>> simulated_pydiabas.ready
+> False
+>```
+
+> **ediabas** -> *EDIABAS*
+>
+> Allows access to the *EDIABAS* object
+> > __Warning:__: EDIABAS is NOT simulated!
+>
+> **Returns** the *EDIABAS* instance being used by this PyDIABAS object.
+> ```
+> >>> simulated_pydiabas.ediabas
+> <pydiabas.ediabas.ediabas.EDIABAS object at 0x.....>
+> ```
+
+> **config([\*\*kwargs])** -> dict
+>
+> As *EDIABAS* is not used by the *SimulatedPyDIABAS*, configuring of *EDIABAS* is not implemented in this class. To indicate this, a dummy dict is returned in stead of the current *EDIABAS* configuration.
+> **Returns** a dummy dict.
+> ```
+> >>> simulated_pydiabas.config(apiTrace=1)
+> {"simulated": True}
+>
+> >>> simulated_pydiabas.config(traceSize=4096)
+> {"simulated": True}
+>
+> >>> simulated_pydiabas.config()
+> {"simulated": True}
+> ```
+
+> **job(ecu, job, [parameters="", result_filter="", fetchall=*True*])** -> Result
+>
+> Simulates the execution of a job and returns the simulated *Result*.
+> In a first step, the jobs added to the instance will be searched for matching data. If not matching, the *custom_job()* method as called as second step.
+> If both steps do not return a simulated *Result* as *StateError* is raised.
+>
+> Parameter **ecu** must be a *str*.  
+> Parameter **job** must be a *str*.  
+> Optional parameter **parameters** must be *str*, *bytes* or *list*.  
+> Optional parameter **result_filter** must be *str* or *list*.  
+> Optional parameter **fetchall** must be a *bool*, but is actually ignored by the simulation.  
+> **Returns** the *Result* object.
+> ```
+> >>> simulated_pydiabas.job("TMODE", "LESE_INTERFACE_TYP")
+> <pydiabas.result.Result object at 0x.....>
+> ``` 
+
+> **custom_job(ecu, job, [parameters="", result_filter="", fetchall=*True*])** -> Result
+>
+> Does nothing by itself. Can be implemented to simulate jobs that can't be simulated by captured jobs.
+> This can be useful if the simulated job has an internal state which influences the returned *Result*.
+> This method is not designed to be called manually. It will be called by the *job()* method if no captured job matches the job that needs to be simulated. See the section [simulating jobs](#simulating-jobs) above for more details.
+>
+> Parameter **ecu** must be a *str*.  
+> Parameter **job** must be a *str*.  
+> Optional parameter **parameters** must be *str*, *bytes* or *list*.  
+> Optional parameter **result_filter** must be *str* or *list*.  
+> Optional parameter **fetchall** must be a *bool*, but is actually ignored by the simulation.  
+> **Returns** the *Result* object.
+
+> **base_result(ecu, job, [n_sets=1])** -> Result
+>
+> Creates a *Result* object containing all basic information that should be available in any simulated *Result*. By specifying *ECU* name and job name, the values in the *Result* can be set accordingly. n_sets can be changed to reflect the number of *jobSets* available in the simulated *Result*, these Sets will be empty.
+>
+> Parameter **ecu** must be a *str*.  
+> Parameter **job** must be a *str*.  
+> Optional parameter **n_sets** must be *int.  
+> **Returns** the *Result* object.
+> ```
+> >>> simulated_pydiabas.base_result("ECU_NAME", "JOB_NAME")
+> <pydiabas.result.Result object at 0x.....>
+> ``` 
+
+> **add_jobs(jobs)** -> None
+>
+> Adds the given *CapturedJob* object to the available jobs for simulation. These objects can be generated using the *pydiabas.simulation.capture_job* decorator.
+> More details about job capturing can be found in the section [capture_jobs decorator](#capture_jobs-decorator).
+>
+> Parameter **jobs** must be a *CapturedJob* object or a *list* or *tuple* containing only *CapturedJob* objects.
+> ```
+> >>> simulated_pydiabas.add_jobs(captured_jobs)
+> ``` 
+
+> **load_jobs([path=""])** -> None
+>
+> Loads job data from the given path. If **path** points to a single file, this file is loaded. If **path** points to a directory, all `*.jobs` files in this directory will be loaded.
+> Mor details concerning generating `*.jobs` files can be found in the sections [save_jobs_to_file function](#save_jobs_to_file-function) and [capture_jobs decorator](#capture_jobs-decorator).
+>
+> Optional parameter **path** must be a *str* or *os.PathLike* object.
+> ```
+> >>> simulated_pydiabas.load_jobs()
+> ``` 
+
+#### CapturedJob class
+This class can be used to store captured job data for subsequent simulations. I provides the container to store the job data and a method to check if the captured job matches a job to be simulated by comparing the arguments passed to the job with the data stored in the *CapturedJob* object.
+This class is not meant to be used to create *CapturedJob* objects manually but by using the *capture_jobs()* decorator described below.
+
+##### Initialization
+To create a new *CapturedJob* object, the following data has to be passed to the constructor.
+
+> **init(ecu, job, result, [parameters="", result_filter=""])** -> None
+>
+> Creates a new *CapturedJob* object with the given data. **parameters** and **result_filter* will be set to an empty *str* of not given.
+>
+> Parameter **ecu** must be a *str*.  
+> Parameter **job** must be *str* or *bytes*.  
+> Parameter **result** must be a *Result* object.  
+> Optional parameter **parameters** must be *str*, *bytes* or *list*.  
+> Optional parameter **result_filter** must be *str* or *list*.  
+> ```
+> >>> captured_job = CapturedJob("FRM", "INFO", result)
+> ```
+
+##### Functions
+> **check(ecu, job, [parameters="", result_filter=""])** -> None | Result
+>
+> Checks if the given arguments match the data stored in the object and returns either the *Result* object if the arguments math, or *None* if they don't.
+>
+> Parameter **ecu** must be a *str*.  
+> Parameter **job** must be *str* or *bytes*.  
+> Parameter **result** must be a *Result* object.  
+> Optional parameter **parameters** must be *str*, *bytes* or *list*.  
+> Optional parameter **result_filter** must be *str* or *list*.  
+> **Returns** the *Result* object or *None*. 
+> ```
+> >>> result = captured_job.check("FRM", "INFO")
+> ```
+
+
+#### capture_jobs decorator
+This decorator can be used to add job data capturing to the *job()* method of a *PyDIABAS* instance.
+The original *job()* method must be given as first arguments and a list to store the captured job data to must be passed as second argument. Each time a job is captured, a new *CapturedJob* object will be appended to the given list, containing the data of this job.
+The decorated *job()* method can be used without any restrictions or modifications.
+```py
+# Captured jobs using the capture_job decorator
+from pydiabas import PyDIABAS
+from pydiabas.simulation import capture_job
+
+# Create a list to store the captured jobs
+captured_jobs = []
+
+# Creates a PyDIABAS instance
+with PyDIABAS() as pydiabas:
+
+    # Decorate the job method and pass the list to store the jobs to
+    pydiabas.job = capture_job(pydiabas.job, captured_jobs)
+
+    # Any executed job will now create a CapturedJob object, wich is appended to te captured_jobs list
+    pydiabas.job("TMODE", "INFO")
+    pydiabas.job("TMODE", "LESE_INTERFACE_TYP")
+```
+
+> **capture_job(job_func, job_cache)** -> Callable
+>
+> Decorated the given **job_func***. Any executed job will be captured as *CapturedJob* object and appended to the list given as **job_cache** argument.
+>
+> Parameter **job_func** must be a *Callable*.  
+> Parameter **job_cache** must be *list*.  
+> **Returns** the decorated job function. 
+> ```
+> >>> pydiabas.job = capture_job(pydiabas.job, captured_jobs)
+> ```
+
+#### save_jobs_to_file function
+This utility function can be used to persistently store captured job to a file. This file can later be used to load all the contained jobs into a *SimulatedPyDIABAS* instance.
+A directory to store the file to can be given as arguments, if omitted the CWD will be used.
+The filename will be set automatically with the format `CAPTURE_***.jobs` where `***` is a ascending number from 1 to 999. The used filename will be returned as *str* containing the absolute path.
+If there are already 999 jobs files in this directory and no unused filename can be generated, a FileExistsError will be raised.
+```py
+# Saving the captured jobs from the example above as file
+from pydiabas.simulation import save_jobs_to_file
+
+# Save captured jobs as *.jobs file in the CWD
+file_path = save_jobs_to_file(captured_jobs)
+```
+
+> **save_jobs_to_file(jobs, [directory=""])** -> str
+>
+> Decorated the given **job_func***. Any executed job will be captured as *CapturedJob* object and appended to the list given as **job_cache** argument.
+>
+> Parameter **jobs** must be a *CapturedJob* object or a *list* or *tuple* of *CapturedJob* objects.  
+> Optional parameter **directory** must be *str* or *os.PathLike* object.  
+> **Returns** the absolute path to the created file as *str*.  
+> **Raises** a *FileExistsError* if failed.
+> ```
+> >>> file_path = save_jobs_to_file(captured_jobs)
+> ```
 
 
 ## 6 Tests
@@ -1233,6 +1686,22 @@ Use the following command to manually run the test for the MSD80:
 ```
 python -Wa -m pytest test -m msd80
 ```
+
+### MSD80 Simulation
+To be able to run all tests without being connected to a car. The jobs executed on an `MSD80` can be simulated by running the test with an additional `--simulation=on` argument.
+```
+python -Wa -m pytest test --simulation=on
+```
+The simulation can be combined with any other argument e.g.:
+```
+python -Wa -m pytest test --simulation=on -m msd80
+```
+
+### Additional test commands
+There are some additional arguments to modify test execution as follows:
+- `--apitrace` ("off", "on" or 0-8, default: 0): Sets the *EDIABAS* apiTrace level.
+- `--capturejobs` ("off" or "on", default: `off`): Controls job capturing of all jobs executed while running the test. The `*.jobs` file will be stored in the CWD.
+
 
 ## 7 Limitations
 ### 32bit python version
@@ -1281,7 +1750,7 @@ To check if you are using a 32bit python version your can simply check the lengt
 
 ### 3. Confirm Communication with TMODE ECU
 If you successfully completed steps 1 and 2 you should be able to import the **pydiabas** library. To check the communication between your **pydiabas** and **EDIABAS** you can try to execute jobs using the "TMODE" ECU. This ECU is accessible even if no USB cable or car is connected to your computer.
-```python
+```py
 # Check communication with EDIABAS
 from pydiabas import PyDIABAS
 
@@ -1360,18 +1829,27 @@ The above copyright notice and this permission notice shall be included in all c
 THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 ## 11 Change Log
-### 1.1.0
+### 1.2.0 (03.02.2025)
+#### New Features
+- *job()* method added to ECU class
+- Simulation feature added
+#### Bugfixes
+- Exception message corrected in *MSD80*
+
+### 1.1.0 (05.01.2025)
+#### New Features
 - New methods *get_in()* and *get_fn()* for *Result* and *Set* class.
+#### Bugfixes
 - Minor BUGFIXES in Tests
+#### Miscellaneous
 - Tested on Python 3.13.1 32bit
 - Tests moved from unittest to pytest
 - Increased test coverage to 99%
 - Using black for code styling
 
-### 1.0.1
+### 1.0.1 (23.11.2024)
 - Reorganized project structure to publish pydiabas as package via PyPi
 - Added installation instructions to README
-
 
 ### 1.0.0
 - Initial Release

@@ -1,3 +1,6 @@
+# Copyright (c) 2024 Aljoscha Greim <aljoscha@bembelbytes.com>
+# MIT License
+
 import pytest
 
 from pydiabas import Result, Set, Row
@@ -264,16 +267,16 @@ class TestSet:
 class TestResult:
 
     @pytest.fixture(scope="function")
-    def r_tmode_lese_interface_typ(self, pydiabas):
-        return pydiabas.job(ecu="TMODE", job="LESE_INTERFACE_TYP")
+    def r_tmode_lese_interface_typ(self, pydiabas_no_sim):
+        return pydiabas_no_sim.job(ecu="TMODE", job="LESE_INTERFACE_TYP")
 
     @pytest.fixture(scope="function")
-    def r_tmode__jobs(self, pydiabas):
-        return pydiabas.job(ecu="TMODE", job="_JOBS")
+    def r_tmode__jobs(self, pydiabas_no_sim):
+        return pydiabas_no_sim.job(ecu="TMODE", job="_JOBS")
 
     @pytest.fixture(scope="function")
-    def r_simulation(self, pydiabas):
-        r_simulation = Result(ediabas=pydiabas._ediabas)
+    def r_simulation(self, pydiabas_no_sim):
+        r_simulation = Result(ediabas=pydiabas_no_sim._ediabas)
         r_simulation._systemSet = Set(rows=[Row(name="SYS", value="TEM")])
         r_simulation._jobSets = [
             Set(rows=[Row(name="R1", value=1)]),
@@ -290,17 +293,17 @@ class TestResult:
         return r_simulation
 
     @pytest.fixture(scope="function")
-    def r_empty(self, pydiabas):
-        r_empty = Result(ediabas=pydiabas._ediabas)
+    def r_empty(self, pydiabas_no_sim):
+        r_empty = Result(ediabas=pydiabas_no_sim._ediabas)
         return r_empty
 
-    def test___init__(self, pydiabas, r_empty):
+    def test___init__(self, pydiabas_no_sim, r_empty):
         assert isinstance(r_empty, Result)
         assert isinstance(r_empty._systemSet, Set)
         assert r_empty._jobSets == []
         assert r_empty._systemSet.all == []
         assert isinstance(r_empty._ediabas, EDIABAS)
-        assert r_empty._ediabas == pydiabas._ediabas
+        assert r_empty._ediabas == pydiabas_no_sim._ediabas
 
     def test___init___wrong_type(self):
         with pytest.raises(TypeError):
@@ -311,8 +314,8 @@ class TestResult:
         assert r_simulation._systemSet.all == []
         assert r_simulation._jobSets == []
 
-    def test_fetchname(self, pydiabas):
-        r = pydiabas.job(ecu="TMODE", job="INFO", fetchall=False)
+    def test_fetchname(self, pydiabas_no_sim):
+        r = pydiabas_no_sim.job(ecu="TMODE", job="INFO", fetchall=False)
         assert not r
         assert len(r) == 0
         r.fetchname("AUTHOR")
@@ -337,7 +340,7 @@ class TestResult:
             "SPRACHE": "deutsch",
         }
 
-        r2 = pydiabas.job(ecu="TMODE", job="_JOBS", fetchall=False)
+        r2 = pydiabas_no_sim.job(ecu="TMODE", job="_JOBS", fetchall=False)
         assert not r2
         assert len(r2) == 0
         r.fetchname("JOBNAME")
@@ -350,16 +353,16 @@ class TestResult:
         assert "SPRACHE" not in r._jobSets[1]
         assert "JOBNAME" in r._jobSets[1]
 
-    def test_fetchset_0(self, pydiabas):
-        r = pydiabas.job(ecu="TMODE", job="_JOBS", fetchall=False)
+    def test_fetchset_0(self, pydiabas_no_sim):
+        r = pydiabas_no_sim.job(ecu="TMODE", job="_JOBS", fetchall=False)
         r._fetchset(i_set=0)
         assert r._systemSet["OBJECT"] == "tmode"
         assert len(r) == 0
         with pytest.raises(KeyError):
             r["JOBNAME"]
 
-    def test_fetchset_1(self, pydiabas):
-        r = pydiabas.job(ecu="TMODE", job="_JOBS", fetchall=False)
+    def test_fetchset_1(self, pydiabas_no_sim):
+        r = pydiabas_no_sim.job(ecu="TMODE", job="_JOBS", fetchall=False)
         r._fetchset(i_set=1)
         assert r["JOBNAME"] is not None
         assert r[0]["JOBNAME"] is not None
@@ -367,8 +370,8 @@ class TestResult:
         with pytest.raises(KeyError):
             r._systemSet["OBJECT"]
 
-    def test_fetchset_1_multiple_rows(self, pydiabas):
-        r = pydiabas.job(
+    def test_fetchset_1_multiple_rows(self, pydiabas_no_sim):
+        r = pydiabas_no_sim.job(
             ecu="TMODE",
             job="_JOBCOMMENTS",
             parameters="SETZE_TRAP_MASK_REGISTER",
@@ -383,8 +386,8 @@ class TestResult:
         with pytest.raises(KeyError):
             r._systemSet["OBJECT"]
 
-    def test_fetchset_2(self, pydiabas):
-        r = pydiabas.job(ecu="TMODE", job="_JOBS", fetchall=False)
+    def test_fetchset_2(self, pydiabas_no_sim):
+        r = pydiabas_no_sim.job(ecu="TMODE", job="_JOBS", fetchall=False)
         r._fetchset(i_set=2)
         assert r["JOBNAME"] is not None
         assert r[1]["JOBNAME"] is not None
@@ -392,8 +395,8 @@ class TestResult:
         with pytest.raises(KeyError):
             r[0]["JOBNAME"]
 
-    def test_fetchset_2_and_4(self, pydiabas):
-        r = pydiabas.job(ecu="TMODE", job="_JOBS", fetchall=False)
+    def test_fetchset_2_and_4(self, pydiabas_no_sim):
+        r = pydiabas_no_sim.job(ecu="TMODE", job="_JOBS", fetchall=False)
         r._fetchset(i_set=2)
         r._fetchset(i_set=4)
         assert r["JOBNAME"] is not None
@@ -403,20 +406,20 @@ class TestResult:
         with pytest.raises(KeyError):
             r[2]["JOBNAME"]
 
-    def test_fetchset_index_error(self, pydiabas):
-        r = pydiabas.job(ecu="TMODE", job="LESE_INTERFACE_TYP", fetchall=False)
+    def test_fetchset_index_error(self, pydiabas_no_sim):
+        r = pydiabas_no_sim.job(ecu="TMODE", job="LESE_INTERFACE_TYP", fetchall=False)
         with pytest.raises(IndexError):
             r._fetchset(2)
 
-    def test_fetchsystem(self, pydiabas):
-        r = pydiabas.job(ecu="TMODE", job="_JOBS", fetchall=False)
+    def test_fetchsystem(self, pydiabas_no_sim):
+        r = pydiabas_no_sim.job(ecu="TMODE", job="_JOBS", fetchall=False)
         r.fetchsystemset()
         assert r._systemSet["OBJECT"] == "tmode"
         with pytest.raises(KeyError):
             r["JOBNAME"]
 
-    def test_fetchjobsets(self, pydiabas):
-        r = pydiabas.job(ecu="TMODE", job="_JOBS", fetchall=False)
+    def test_fetchjobsets(self, pydiabas_no_sim):
+        r = pydiabas_no_sim.job(ecu="TMODE", job="_JOBS", fetchall=False)
         r.fetchjobsets()
         assert r["JOBNAME"] is not None
         assert r[0]["JOBNAME"] is not None
@@ -425,55 +428,55 @@ class TestResult:
         with pytest.raises(KeyError):
             r._systemSet["OBJECT"]
 
-    def test_fetchall(self, pydiabas):
-        r = pydiabas.job(ecu="TMODE", job="LESE_INTERFACE_TYP", fetchall=False)
+    def test_fetchall(self, pydiabas_no_sim):
+        r = pydiabas_no_sim.job(ecu="TMODE", job="LESE_INTERFACE_TYP", fetchall=False)
         r.fetchall()
         assert r["TYP"] == b"OBD"
         assert r._systemSet["OBJECT"] == "tmode"
 
-    def test_fetchall_multiple_sets(self, pydiabas):
-        r = pydiabas.job(ecu="TMODE", job="_JOBS", fetchall=False)
+    def test_fetchall_multiple_sets(self, pydiabas_no_sim):
+        r = pydiabas_no_sim.job(ecu="TMODE", job="_JOBS", fetchall=False)
         r.fetchall()
         assert r["JOBNAME"] == "INFO"
         assert r[4]["JOBNAME"] == "SETZE_SG_PARAMETER_ALLG"
         assert r._systemSet["OBJECT"] == "tmode"
 
-    def test_fetchname_multiple_sets(self, pydiabas):
-        r = pydiabas.job(ecu="TMODE", job="_JOBS", fetchall=False)
+    def test_fetchname_multiple_sets(self, pydiabas_no_sim):
+        r = pydiabas_no_sim.job(ecu="TMODE", job="_JOBS", fetchall=False)
         r.fetchname("JOBNAME")
         assert r["JOBNAME"] == "INFO"
         assert r[4]["JOBNAME"] == "SETZE_SG_PARAMETER_ALLG"
 
-    def test_fetchname_wrong_name(self, pydiabas):
-        r = pydiabas.job(ecu="TMODE", job="LESE_INTERFACE_TYP", fetchall=False)
+    def test_fetchname_wrong_name(self, pydiabas_no_sim):
+        r = pydiabas_no_sim.job(ecu="TMODE", job="LESE_INTERFACE_TYP", fetchall=False)
         r.fetchname("XX")
         with pytest.raises(KeyError):
             r["TYP"]
 
-    def test_fetchnames(self, pydiabas):
-        r = pydiabas.job(ecu="TMODE", job="LESE_INTERFACE_TYP", fetchall=False)
+    def test_fetchnames(self, pydiabas_no_sim):
+        r = pydiabas_no_sim.job(ecu="TMODE", job="LESE_INTERFACE_TYP", fetchall=False)
         r.fetchnames(["TYP"])
         assert r["TYP"] == b"OBD"
 
-    def test_fetchnames_multiple_sets(self, pydiabas):
-        r = pydiabas.job(ecu="TMODE", job="_JOBS", fetchall=False)
+    def test_fetchnames_multiple_sets(self, pydiabas_no_sim):
+        r = pydiabas_no_sim.job(ecu="TMODE", job="_JOBS", fetchall=False)
         r.fetchnames(["JOBNAME"])
         assert r["JOBNAME"] == "INFO"
         assert r[4]["JOBNAME"] == "SETZE_SG_PARAMETER_ALLG"
 
-    def test_fetchnames_one_wrong_name(self, pydiabas):
-        r = pydiabas.job(ecu="TMODE", job="LESE_INTERFACE_TYP", fetchall=False)
+    def test_fetchnames_one_wrong_name(self, pydiabas_no_sim):
+        r = pydiabas_no_sim.job(ecu="TMODE", job="LESE_INTERFACE_TYP", fetchall=False)
         r.fetchnames(["Y", "TYP", "X"])
         assert r["TYP"] == b"OBD"
 
-    def test_fetchnames_only_wrong_names(self, pydiabas):
-        r = pydiabas.job(ecu="TMODE", job="LESE_INTERFACE_TYP", fetchall=False)
+    def test_fetchnames_only_wrong_names(self, pydiabas_no_sim):
+        r = pydiabas_no_sim.job(ecu="TMODE", job="LESE_INTERFACE_TYP", fetchall=False)
         r.fetchnames(["Y", "X"])
         with pytest.raises(KeyError):
             r["TYP"]
 
-    def test_fetchname_after_fetchset(self, pydiabas):
-        r = pydiabas.job(
+    def test_fetchname_after_fetchset(self, pydiabas_no_sim):
+        r = pydiabas_no_sim.job(
             ecu="TMODE",
             job="_JOBCOMMENTS",
             parameters="SETZE_TRAP_MASK_REGISTER",
@@ -490,8 +493,8 @@ class TestResult:
         assert "JOBCOMMENT0" in r
         assert "JOBCOMMENT1" in r
 
-    def test_fetchset_after_fetchname(self, pydiabas):
-        r = pydiabas.job(
+    def test_fetchset_after_fetchname(self, pydiabas_no_sim):
+        r = pydiabas_no_sim.job(
             ecu="TMODE",
             job="_JOBCOMMENTS",
             parameters="SETZE_TRAP_MASK_REGISTER",

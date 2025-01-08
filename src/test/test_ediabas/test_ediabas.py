@@ -1,3 +1,6 @@
+# Copyright (c) 2024 Aljoscha Greim <aljoscha@bembelbytes.com>
+# MIT License
+
 import pytest
 import ctypes
 
@@ -6,7 +9,6 @@ from pydiabas.ediabas import EDIABAS, API_STATE, VersionCheckError, JobFailedErr
 from pydiabas.ediabas.statics import API_RESULT_FORMAT
 
 
-@pytest.mark.dev
 @pytest.mark.offline
 class TestEdiabas:
     def test___init__(self):

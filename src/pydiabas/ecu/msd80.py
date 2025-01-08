@@ -81,7 +81,7 @@ class MSD80(ECU):
                 "Only values from MESSWERTETAB where NAME is '-' are supported, except as very last item in value list"
             )
 
-        raise BlockCreateError(f"JOBSTATUS: {result.systemSet['JOBSTATUS']}")
+        raise BlockCreateError(f"JOB_STATUS: {result.get('JOB_STATUS')}")
 
     def read_block(self, pydiabas) -> Result | None:
         """Read a previously set block of reading from the ecu.
@@ -130,7 +130,7 @@ class MSD80(ECU):
         ):
             raise BlockReadError("No block available in ECU")
 
-        raise BlockReadError(f"JOBSTATUS: {result.systemSet['JOBSTATUS']}")
+        raise BlockReadError(f"JOB_STATUS: {result.get('JOB_STATUS')}")
 
     def read(self, pydiabas: PyDIABAS, values: list[str]) -> Result | None:
         """Read values from the ECU an a way wich is slower that read_block but is able to read as many values with
@@ -163,7 +163,7 @@ class MSD80(ECU):
             self._last_read_function = lambda: self.read(pydiabas, values)
             return result
 
-        raise ValueReadError(f"JOBSTATUS: {result.systemSet['JOBSTATUS']}")
+        raise ValueReadError(f"JOB_STATUS: {result.get('JOB_STATUS')}")
 
     def read_auto(self, pydiabas: PyDIABAS, values: list[str]) -> Result | None:
         """Automatically selects the fastest way to read all the values from the ecu.

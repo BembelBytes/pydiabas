@@ -1,3 +1,6 @@
+# Copyright (c) 2024 Aljoscha Greim <aljoscha@bembelbytes.com>
+# MIT License
+
 import pytest
 
 from pydiabas.ediabas import utils

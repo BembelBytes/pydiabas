@@ -19,6 +19,46 @@ class ECU:
         if name is not None:
             self.name = name
 
+    def job(
+        self,
+        pydiabas: PyDIABAS,
+        job: str | bytes,
+        parameters: str | bytes | list[str] | list[bytes] = "",
+        result_filter: str | list[str] = "",
+        fetchall: bool = True,
+    ):
+        """Executes a job on this ECU
+
+        This method is just implemented to facilitate the execution on jobs when currently working with a ECU class
+        instead of working with directly on a PyDIABAS instance.
+        There is no additional functionality to the job() method of the PyDIABAS class.
+
+        Parameters:
+        pydiabas: PyDIABAS instance to be used to communicate with the ECU.
+        job: Name of the job to be executed.
+
+        Optional Parameters:
+        parameters: Job parameters to be passed alongside with the job.
+        result_filter: Results to be asked for. May not work with all ECUs.
+        fetchall: If set to False it avoids fetching the complete result. Fetching must be done manually trough the
+                  methods coming with the Result object.
+
+        Return values:
+        return: Result object with all values fetched (if not deactivated).
+
+        Raises:
+            StateError
+            TypeError
+        """
+
+        return pydiabas.job(
+            ecu=self.name,
+            job=job,
+            parameters=parameters,
+            result_filter=result_filter,
+            fetchall=fetchall,
+        )
+
     def get_jobs(
         self, pydiabas: PyDIABAS, details: bool = True, verbose: bool = False
     ) -> dict[dict]:

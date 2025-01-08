@@ -51,12 +51,12 @@ class PyDIABAS:
         if self._ediabas.state() == ediabas.API_STATE.ERROR:
             raise StateError(self._ediabas.errorText())
 
-    def end(self):
+    def end(self) -> None:
         """Ends EDIABAS API session and frees used memory."""
 
         self._ediabas.end()
 
-    def reset(self):
+    def reset(self) -> None:
         """Resets the EDIABAS API session be stopping and starting it again.
         Configuration will be set according to configuration settings after restart.
         """
