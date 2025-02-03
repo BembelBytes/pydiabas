@@ -1,7 +1,7 @@
 # pydiabas
-**pydiabas** is a python module for communication with ECUs (Electronic Control Units) in cars using **EDIABAS** as diagnosis system (eg. BMW, Volkswagen).
+**pydiabas** is a Python module for communication with ECUs (Electronic Control Units) in cars using **EDIABAS** as diagnosis system (eg. BMW, Volkswagen).
 The module has only been tested on BMW cars.
-Using this module makes it possible to make advantage of the comfort features of python by still allowing communication to a car using **EDIABAS** on a very low level.
+Using this module makes it possible to make advantage of the comfort features of Python by still allowing communication to a car using **EDIABAS** on a very low level.
 
 ## Table of contents
 1. [General Description](#1-general-description)
@@ -40,11 +40,11 @@ The **pydiabas** module has two sub modules:
 > **Note**
 > For a better distinction between this documentation uses the following formatting:
 > - **EDIABAS**: EDIABAS system installed separately on your pc
-> - **ediabas**: ediabas python module.
+> - **ediabas**: ediabas Python module.
 > - *EDIABAS*: EDIABAS class located in the ediabas module.
 
 ### Architecture
-1. **EDIABAS**: It's the basis for any communication via the OBD cable tour your car, respective your cars ECUs. It is installed separately and not part of this python module.
+1. **EDIABAS**: It's the basis for any communication via the OBD cable tour your car, respective your cars ECUs. It is installed separately and not part of this Python module.
 2. **ediabas**: Serves mainly as a wrapper to provide a more pythonic API for **EDIABAS** and  has an utility to facilitate result retrieval. This module can be used even without **pydiabas**.
 3. **pydiabas**: Serves as an additional abstraction layer on top of the **ediabas** module to make working with **EDIABAS** more flawless and to hide some complexity from the user. This is the main abstraction layer to be used.
 4. **ecu**: Can be used in addition to **pydiabas**. It contains a generic ECU class which can be used with any ECU to extract available jobs and tables.
@@ -65,8 +65,8 @@ I'm using the [MaxDia Diag 2+](https://www.obdexpert.de/shopware/diagnose-artike
 > I don't get payed by obdexpert.de, its just as personal recommendation based on my experience. There may be lots of other cables out there which will be as good or even better as my suggestion, but I've never used them.
 
 ### Python Version and dependencies
-This module has been developed using [python 3.12.7 32bit](https://www.python.org/downloads/release/python-3127/) and tested on [python 3.13.1 32bit](https://www.python.org/downloads/release/python-3131/). The minimum required version is [python 3.10.0 32bit](https://www.python.org/downloads/release/python-3100/).
-As **EDIABAS** uses 32bits memory addresses, a 32bit python version is necessary to load the **EDIABAS** dynamic library ("api32.dll").
+This module has been developed using `Python 3.12 32bit` and tested on `Python 3.13 32bit`. The minimum required version is `Python 3.10 32bit`.
+As **EDIABAS** uses 32bits memory addresses, a 32bit Python version is necessary to load the **EDIABAS** dynamic library ("api32.dll"). Running this package on a 64bit Python version will fail!
 
 
 ## 3 Installation
@@ -81,13 +81,13 @@ To get your first data out of **pydiabas** you just need a few lines of code.
 It's not necessary to have your OBD cable connected to your PC as `TMODE` is a simulated ECU which can be accessed without being connected to a car.
 
 ```py
-# Make sure to use a 32bit python version!
+# Make sure to use a 32bit Python version!
 
 # Import the PyDIABAS class from the pydiabas module
 from pydiabas import PyDIABAS
 
 # Start the session
-# Using pythons context manager ensured proper closing of the EDIABAS session
+# Using Pythons context manager ensured proper closing of the EDIABAS session
 with PyDIABAS() as pydiabas:
 
     # Ask the ECU named "TMODE" to execute a job named "LESE_INTERFACE_TYP"
@@ -96,7 +96,7 @@ with PyDIABAS() as pydiabas:
     # Access result data
     print(result["TYP"]) # prints: b'OBD'
 ```
-> __Info:__ If you get the following error you are most probably using a 64bit python version.  
+> __Info:__ If you get the following error you are most probably using a 64bit Python version.  
 > `OSError: [WinError 193] %1 is not a valid Win32 application`
 
 
@@ -109,8 +109,8 @@ This is the main module to be used. It provides all functionality usually requir
 The *PyDIABAS* class provides a simple and comfortable API for communication via **EDIABAS**.
 
 ##### Starting and ending the **EDIABAS** session
-After creating an instance of *PyDIABAS* the *start()* method must be called to set up everything for subsequent communication. This can be done either manually, or automatically by using pythons context manager. Calling *start()* multiple times will usually not cause any problems or memory leaks.
-After finishing communications the *end()* method must be called to stop the connection to **EDIABAS** and free the used resources. This is done automatically by using pythons context manager, or must be done manually otherwise.
+After creating an instance of *PyDIABAS* the *start()* method must be called to set up everything for subsequent communication. This can be done either manually, or automatically by using Pythons context manager. Calling *start()* multiple times will usually not cause any problems or memory leaks.
+After finishing communications the *end()* method must be called to stop the connection to **EDIABAS** and free the used resources. This is done automatically by using Pythons context manager, or must be done manually otherwise.
 Forgetting to call *end()* usually doesn't cause any major problems, even for possible succeeding **EDIABAS** sessions on the same machine but it should always be done as a good habit.
 During any time the present state of **EDIABAS** can be checked using the property *ready*. It returns *True* if **EDIABAS** is ready or *False* if not. Getting *False* as return value does not necessary mean that **EDIABAS** is not able to execute a Job. *False* may be returned if *start()* has not been called or failed, or if the previous job failed for any reason. In the last case a succeeding job may run successful.
 
@@ -131,7 +131,7 @@ pydiabas.start()
 pydiabas.end()
 ```
 ```py
-# Starting and ending an EDIABAS session automatically using pythons context manager
+# Starting and ending an EDIABAS session automatically using Pythons context manager
 from pydiabas import PyDIABAS
 
 with PyDIABAS() as pydiabas:
@@ -253,7 +253,7 @@ with PyDIABAS() as pydiabas:
 
 > **ediabas** -> *EDIABAS*
 >
-> Allows access to the *EDIABAS* object (in this case not the **EDIABAS** system installed on your pc but the python *EDIABAS* object being part og the **ediabas** sub-module of **pydiabas** currently used by this *PyDIABAS* object).  
+> Allows access to the *EDIABAS* object (in this case not the **EDIABAS** system installed on your pc but the Python *EDIABAS* object being part og the **ediabas** sub-module of **pydiabas** currently used by this *PyDIABAS* object).  
 >
 > **Returns** the *EDIABAS* instance being used by this PyDIABAS object.
 > ```
@@ -411,7 +411,7 @@ result:
 <br>
 
 ```py
-# Using python standart functionality with a Result object
+# Using Python standart functionality with a Result object
 
 # Get number of jobSets
 len(result)
@@ -698,7 +698,7 @@ system_set:
 <br>
 
 ```py
-# Using python standart functionality with a Set
+# Using Python standart functionality with a Set
 
 # Get number of Rows
 len(system_set)
@@ -923,7 +923,7 @@ Provides helper functions for a more comfortable and clean way of interaction wi
 > **getResult(ediabas, name, [set=1])** -> *str* | *bytes* | *int* | *float* | *None*
 > 
 > Accesses the **EDIABAS** result and searches the given result set (defaults to 1, as this is the first set containing data returned by the job) data with the given name.  
-> Checks the format of the data, gets the data and casts it to the most appropriate python data type. If no data with the name is found, *None* will be returned.
+> Checks the format of the data, gets the data and casts it to the most appropriate Python data type. If no data with the name is found, *None* will be returned.
 >
 > Parameter **ediabas** must be an *EDIABAS* instance.  
 > Parameter **name** must be a *str*.  
@@ -1664,7 +1664,7 @@ file_path = save_jobs_to_file(captured_jobs)
 ## 6 Tests
 There are test which can be run without being connected to an ECU and some other tests need a specific ECU to be connected.  
 A working **EDIABAS** system ist required. To solve the most common communication problems with **EDIABAS** please consult the section [EDIABAS Troubleshooting](#8-ediabas-troubleshooting). Steps 1-3 must be completed successful to run the offline test and steps 4-5 in addition to be able to run online tests.
-The test must be executed using `pytest` on a 32bit python version.
+The test must be executed using `pytest` on a 32bit Python version.
 Current test coverage is 99%.
 Use the following command to run all test
 ```
@@ -1704,8 +1704,8 @@ There are some additional arguments to modify test execution as follows:
 
 
 ## 7 Limitations
-### 32bit python version
-As **EDIABAS** is using a 32bit architecture, a 32bit python version must be used to be able to load the `api32.dll` library.
+### 32bit Python version
+As **EDIABAS** is using a 32bit architecture, a 32bit Python version must be used to be able to load the `api32.dll` library.
 
 ### EDIABAS Multi Threading
 It seems that **EDIABAS** allows multithreading in some way, but I didn't figure out how to use it or why it isn't working in my computer.
@@ -1726,9 +1726,9 @@ Here are some common reasons for problems with getting a connection to your car.
 ### 1. Check your Windows Environment Variables
 Make sure that the `/bin` folder of your **EDIABAS** installation (default: `C:\EDIABAS\bin`) is set as *system environment variable*. This is needed to be able to load the `api32.dll` library.
 
-### 2. Using a 32bit python version
-Make sure your are using a 32bit python version when using this module.  
-If your are using a 46bit python version and importing the pydiabas library you will get the following error message:
+### 2. Using a 32bit Python version
+Make sure your are using a 32bit Python version when using this module.  
+If your are using a 64bit Python version and importing the pydiabas library you will get the following error message:
 ```
 >>> import pydiabas
 Traceback (most recent call last):
@@ -1736,13 +1736,13 @@ Traceback (most recent call last):
  ...
 OSError: [WinError 193] %1 is not a valid Win32 application
 ```
-To check if you are using a 32bit python version your can simply check the length of a memory access of any object like this:
+To check if you are using a 32bit Python version your can simply check the length of a memory access of any object like this:
 ```
-# On a 64bit python addresses are 12 characters long
+# On a 64bit Python addresses are 12 characters long
 >>> hex(id(None))
 '0x7fff32736cc8'
 
-# On a 32bit python addresses are 8 characters long
+# On a 32bit Python addresses are 8 characters long
 >>> hex(id(None))
 '0x607c0340'
 ```
