@@ -35,8 +35,8 @@ class SimulatedPyDIABAS(PyDIABAS):
         return bool(self._captured_jobs)
 
     def start(self) -> None:
-        """Clears captured jobs list"""
-        self._captured_jobs = []
+        """No implementation necessary in simulation"""
+        pass
 
     def end(self) -> None:
         """No implementation necessary in simulation"""

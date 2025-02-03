@@ -1449,21 +1449,21 @@ dedicated_simulation.job("SIM", "TEST")
 
 > **start()** - > None
 >
-> Clears all jobs that might have been loaded previously. 
+> Does nothing in this simulation.
 > ```
 > >>> simulated_pydiabas.start()
 > ```
 
 > **end()** -> None
 >
-> Does nothing in this simulation
+> Does nothing in this simulation.
 > ```
 > >>> simulated_pydiabas.end()
 > ```
 
 > **reset()** -> None
 >
-> Has the same effect as calling *end()* and *start()* consecutive.
+> Does nothing in this simulation.
 > ```
 > >>> simulated_pydiabas.reset()
 > ```
@@ -1700,7 +1700,7 @@ python -Wa -m pytest test --simulation=on -m msd80
 ### Additional test commands
 There are some additional arguments to modify test execution as follows:
 - `--apitrace` ("off", "on" or 0-8, default: 0): Sets the *EDIABAS* apiTrace level.
-- `--capturejobs` ("off" or "on", default: `off`): Controls job capturing of all jobs executed while running the test. The `*.jobs` file will be stored in the CWD.
+- `--capturejobs` ("off" or "on", default: "off"): Controls job capturing of all jobs executed while running the test. The `*.jobs` file will be stored in the CWD.
 
 
 ## 7 Limitations

@@ -77,13 +77,6 @@ class TestSimulation:
         simulated_pydiabas.add_jobs(captured_jobs)
         assert simulated_pydiabas.ready
 
-    def test_start(self, captured_jobs):
-        simulated_pydiabas = SimulatedPyDIABAS()
-        simulated_pydiabas.add_jobs(captured_jobs)
-        assert simulated_pydiabas.ready
-        simulated_pydiabas.start()
-        assert not simulated_pydiabas.ready
-
     def test_config(self):
         simulated_pydiabas = SimulatedPyDIABAS()
         assert simulated_pydiabas.config(foo="bar") == {"simulated": True}

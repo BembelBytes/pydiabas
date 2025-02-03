@@ -70,6 +70,8 @@ def reset_pydiabas(pydiabas: PyDIABAS | SimulatedPyDIABAS):
 
     # Load jobs data into simulation
     if isinstance(pydiabas, SimulatedPyDIABAS):
+        # Reset captured jobs
+        pydiabas._captured_jobs = []
         pydiabas.load_jobs(SIMULATION_DATA_PATH)
 
     return pydiabas
